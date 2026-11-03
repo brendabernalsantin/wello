@@ -1,0 +1,7 @@
+import {chromium} from '@playwright/test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
+const page=await browser.newPage({viewport:{width:390,height:844}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+try{await page.goto('file://'+path.resolve('dist/index.html')+'#super?accion=agregar');await page.waitForFunction(()=>!!window.WelloCloud);assert.equal(await page.locator('[data-wello-cloud-action="google"]').isDisabled(),true);assert.equal(await page.locator('#dialog').evaluate(el=>el.open),false);await page.locator('[data-wello-cloud-action="local"]').click();await page.waitForFunction(()=>document.getElementById('dialog').open);assert.match(await page.locator('#modal-title').textContent(),/Agregar al súper/);assert.equal(await page.evaluate(()=>location.hash),'#alimentos');await page.locator('[data-action="modal-close"]').first().click();await page.reload();await page.waitForFunction(()=>!!window.WelloCloud);assert.equal(await page.locator('#dialog').evaluate(el=>el.open),false);assert.deepEqual(errors,[]);await fs.writeFile('artifacts/pages-ui-results.json',JSON.stringify({googleDisabled:true,nfcDeferred:true,nfcConsumedOnce:true,errors,executedAt:new Date().toISOString()},null,2));console.log('PASS Pages preview: Google deshabilitado, NFC pospuesto y consumido una vez, sin errores.');}finally{await browser.close();}

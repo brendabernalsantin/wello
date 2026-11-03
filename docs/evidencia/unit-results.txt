@@ -1,0 +1,284 @@
+
+> wello@1.0.0 test
+> node --test tests/*.test.js
+
+TAP version 13
+# Subtest: separa namespace y cache por cuenta sin colisiones
+ok 1 - separa namespace y cache por cuenta sin colisiones
+  ---
+  duration_ms: 2.24165
+  type: 'test'
+  ...
+# Subtest: la configuración exige modo/url/clave pública y rechaza secretos
+ok 2 - la configuración exige modo/url/clave pública y rechaza secretos
+  ---
+  duration_ms: 1.590178
+  type: 'test'
+  ...
+# Subtest: NFC solo acepta el destino explícito y se consume una vez
+ok 3 - NFC solo acepta el destino explícito y se consume una vez
+  ---
+  duration_ms: 0.855368
+  type: 'test'
+  ...
+# Subtest: callback OAuth conserva la base relativa de Pages
+ok 4 - callback OAuth conserva la base relativa de Pages
+  ---
+  duration_ms: 0.445908
+  type: 'test'
+  ...
+# Subtest: los ids locales no autorizan hogares: solo se preparan mapeos explícitos
+ok 5 - los ids locales no autorizan hogares: solo se preparan mapeos explícitos
+  ---
+  duration_ms: 2.33934
+  type: 'test'
+  ...
+# Subtest: la importación remota requiere mapping y no crea hogares implícitos
+ok 6 - la importación remota requiere mapping y no crea hogares implícitos
+  ---
+  duration_ms: 0.555446
+  type: 'test'
+  ...
+# Subtest: merge de revisión combina cambios disjuntos y rechaza last-wins
+ok 7 - merge de revisión combina cambios disjuntos y rechaza last-wins
+  ---
+  duration_ms: 0.810904
+  type: 'test'
+  ...
+# Subtest: operaciones estables son idempotentes y sensibles al sujeto
+ok 8 - operaciones estables son idempotentes y sensibles al sujeto
+  ---
+  duration_ms: 0.428817
+  type: 'test'
+  ...
+# Subtest: el cliente online usa SDK oficial, configuración global y no claves privilegiadas
+ok 9 - el cliente online usa SDK oficial, configuración global y no claves privilegiadas
+  ---
+  duration_ms: 2.428792
+  type: 'test'
+  ...
+# Subtest: el controlador limpia namespace al perder sesión y no cambia namespace durante TOKEN_REFRESHED
+ok 10 - el controlador limpia namespace al perder sesión y no cambia namespace durante TOKEN_REFRESHED
+  ---
+  duration_ms: 2.001313
+  type: 'test'
+  ...
+# Subtest: el destino NFC se consume una vez y deja la ruta base en \#alimentos después de abrir
+ok 11 - el destino NFC se consume una vez y deja la ruta base en \#alimentos después de abrir
+  ---
+  duration_ms: 0.679639
+  type: 'test'
+  ...
+# Subtest: un conflicto conserva la revisión CAS confiable para el siguiente intento
+ok 12 - un conflicto conserva la revisión CAS confiable para el siguiente intento
+  ---
+  duration_ms: 1.694564
+  type: 'test'
+  ...
+# Subtest: la migración cubre RLS, WITH CHECK, search_path seguro y conflicto CAS
+ok 13 - la migración cubre RLS, WITH CHECK, search_path seguro y conflicto CAS
+  ---
+  duration_ms: 0.918285
+  type: 'test'
+  ...
+# Subtest: fechas locales, semana lunes y periodicidad mensual en meses cortos
+ok 14 - fechas locales, semana lunes y periodicidad mensual en meses cortos
+  ---
+  duration_ms: 1.946077
+  type: 'test'
+  ...
+# Subtest: cantidad diaria parcial y semanal sólo suman registros de su periodo
+ok 15 - cantidad diaria parcial y semanal sólo suman registros de su periodo
+  ---
+  duration_ms: 2.136509
+  type: 'test'
+  ...
+# Subtest: dos hogares aíslan sus hábitos familiares, mood y Gym no cambian
+ok 16 - dos hogares aíslan sus hábitos familiares, mood y Gym no cambian
+  ---
+  duration_ms: 5.199697
+  type: 'test'
+  ...
+# Subtest: mood edición por fecha no duplica y aparece en calendario Hábitos
+ok 17 - mood edición por fecha no duplica y aparece en calendario Hábitos
+  ---
+  duration_ms: 0.95776
+  type: 'test'
+  ...
+# Subtest: guardar y recargar conserva mood y cargas cero; namespace aislado
+ok 18 - guardar y recargar conserva mood y cargas cero; namespace aislado
+  ---
+  duration_ms: 1.699438
+  type: 'test'
+  ...
+# Subtest: importación repetida inocua, duplicado mantiene dato local y dañada no escribe
+ok 19 - importación repetida inocua, duplicado mantiene dato local y dañada no escribe
+  ---
+  duration_ms: 3.630368
+  type: 'test'
+  ...
+# Subtest: copias anteriores sin mood/citas/compras migran aditivamente y sesiones no infieren reps
+ok 20 - copias anteriores sin mood/citas/compras migran aditivamente y sesiones no infieren reps
+  ---
+  duration_ms: 0.652874
+  type: 'test'
+  ...
+# Subtest: ICS UID estable escape saltos coma y mood notas son opt-in
+ok 21 - ICS UID estable escape saltos coma y mood notas son opt-in
+  ---
+  duration_ms: 3.047221
+  type: 'test'
+  ...
+# Subtest: copias con horas malformadas de mascotas o hábitos de ID ambiguo se rechazan
+ok 22 - copias con horas malformadas de mascotas o hábitos de ID ambiguo se rechazan
+  ---
+  duration_ms: 1.558786
+  type: 'test'
+  ...
+# Subtest: ICS ignora eventos con fechas u horas no válidas
+ok 23 - ICS ignora eventos con fechas u horas no válidas
+  ---
+  duration_ms: 1.372119
+  type: 'test'
+  ...
+# Subtest: estimateShopping usa el último precio compatible y no cuenta compras terminadas
+ok 24 - estimateShopping usa el último precio compatible y no cuenta compras terminadas
+  ---
+  duration_ms: 18.359945
+  type: 'test'
+  ...
+# Subtest: estimateShopping separa la falta de precio y unidades incompatibles
+ok 25 - estimateShopping separa la falta de precio y unidades incompatibles
+  ---
+  duration_ms: 0.578568
+  type: 'test'
+  ...
+# Subtest: consolidateShopping suma pendientes del mismo producto y unidad, pero no compras cerradas
+ok 26 - consolidateShopping suma pendientes del mismo producto y unidad, pero no compras cerradas
+  ---
+  duration_ms: 0.495097
+  type: 'test'
+  ...
+# Subtest: pasar al inventario es explícito, conserva ubicación/caducidad y es idempotente
+ok 27 - pasar al inventario es explícito, conserva ubicación/caducidad y es idempotente
+  ---
+  duration_ms: 6.383328
+  type: 'test'
+  ...
+# Subtest: transferencias consolidadas conservan cada fuente y sobreviven una recarga JSON
+ok 28 - transferencias consolidadas conservan cada fuente y sobreviven una recarga JSON
+  ---
+  duration_ms: 1.339881
+  type: 'test'
+  ...
+# Subtest: migra metadatos singulares de transferencia de forma aditiva y bloquea la repetición
+ok 29 - migra metadatos singulares de transferencia de forma aditiva y bloquea la repetición
+  ---
+  duration_ms: 0.643446
+  type: 'test'
+  ...
+# Subtest: poner inventario en cero guarda antes de ofrecer el súper y no repite el renglón
+ok 30 - poner inventario en cero guarda antes de ofrecer el súper y no repite el renglón
+  ---
+  duration_ms: 1.145674
+  type: 'test'
+  ...
+# Subtest: recordPurchase conserva ticket, líneas, descuentos y diferencia sin inventar líneas
+ok 31 - recordPurchase conserva ticket, líneas, descuentos y diferencia sin inventar líneas
+  ---
+  duration_ms: 0.763561
+  type: 'test'
+  ...
+# Subtest: el modal de ticket conserva total con step válido y contrato FormData superior
+ok 32 - el modal de ticket conserva total con step válido y contrato FormData superior
+  ---
+  duration_ms: 54.450353
+  type: 'test'
+  ...
+# Subtest: lookupNearby transforma resultados Overpass a tiendas sin guardar coordenadas
+ok 33 - lookupNearby transforma resultados Overpass a tiendas sin guardar coordenadas
+  ---
+  duration_ms: 1.769395
+  type: 'test'
+  ...
+# Subtest: lookupNearby expone estado de sin resultados y no requiere red para coordenadas inválidas
+ok 34 - lookupNearby expone estado de sin resultados y no requiere red para coordenadas inválidas
+  ---
+  duration_ms: 0.712378
+  type: 'test'
+  ...
+# Subtest: addShoppingItem consolida un pendiente sin cambiar colecciones personales
+ok 35 - addShoppingItem consolida un pendiente sin cambiar colecciones personales
+  ---
+  duration_ms: 0.37856
+  type: 'test'
+  ...
+# Subtest: el plan público contiene cuatro rutinas y 38 entradas con IDs estables
+ok 36 - el plan público contiene cuatro rutinas y 38 entradas con IDs estables
+  ---
+  duration_ms: 3.797317
+  type: 'test'
+  ...
+# Subtest: la identidad de sesión usa fecha local y rutina
+ok 37 - la identidad de sesión usa fecha local y rutina
+  ---
+  duration_ms: 0.576246
+  type: 'test'
+  ...
+# Subtest: updateSet distingue cero kilogramos de sin peso y no muta la sesión original
+ok 38 - updateSet distingue cero kilogramos de sin peso y no muta la sesión original
+  ---
+  duration_ms: 0.622285
+  type: 'test'
+  ...
+# Subtest: evolutionData usa la mayor carga de series realizadas y excluye series sin marcar
+ok 39 - evolutionData usa la mayor carga de series realizadas y excluye series sin marcar
+  ---
+  duration_ms: 15.321084
+  type: 'test'
+  ...
+# Subtest: las observaciones conservan referencia, nota y granularidad sin compararse como total
+ok 40 - las observaciones conservan referencia, nota y granularidad sin compararse como total
+  ---
+  duration_ms: 0.616821
+  type: 'test'
+  ...
+# Subtest: la gráfica compara solo la referencia seleccionada y excluye candidatos sin verificar
+ok 41 - la gráfica compara solo la referencia seleccionada y excluye candidatos sin verificar
+  ---
+  duration_ms: 0.662671
+  type: 'test'
+  ...
+# Subtest: el formulario genérico excluye medication y sólo ofrece tipos de actividad generales
+ok 42 - el formulario genérico excluye medication y sólo ofrece tipos de actividad generales
+  ---
+  duration_ms: 4.023237
+  type: 'test'
+  ...
+# Subtest: editar medicamento con cuidados desactivados actualiza fecha, hora y nombre sin cambiar el id
+ok 43 - editar medicamento con cuidados desactivados actualiza fecha, hora y nombre sin cambiar el id
+  ---
+  duration_ms: 2.171503
+  type: 'test'
+  ...
+# Subtest: las altas de medicamento requieren cuidados activos incluso si se desactivan antes de guardar
+ok 44 - las altas de medicamento requieren cuidados activos incluso si se desactivan antes de guardar
+  ---
+  duration_ms: 0.359533
+  type: 'test'
+  ...
+# Subtest: openPetActivity abre el registro original o el perfil cuando no hay actividad
+ok 45 - openPetActivity abre el registro original o el perfil cuando no hay actividad
+  ---
+  duration_ms: 0.941678
+  type: 'test'
+  ...
+1..45
+# tests 45
+# suites 0
+# pass 45
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 231.465608
