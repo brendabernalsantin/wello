@@ -14,7 +14,11 @@ Puedes tocar **Terminar sesión** aunque queden ejercicios pendientes. No se mar
 
 ## Hábitos y mood
 
-Crea un hábito con nombre, muestra de color, fecha y frecuencia. Elige **Para mí** o **Para mi hogar**. Las metas pueden ser por día o por semana, de lunes a domingo. Si eliges el día 31 y el mes no lo tiene, Wello usa el último día.
+Crea un hábito con nombre, icono visible y muestra de color. Elige **Para mí** o **Para mi hogar**. En Mis hábitos cada fila muestra el icono, el nombre y el check; al tocar el nombre se abre el detalle con frecuencia, semana, metas y edición. No necesitas abrir el detalle para marcar un hábito simple. En días no programados, el check no se activa; los registros antiguos fuera de programación se conservan y pueden corregirse.
+
+La frecuencia muestra sólo los controles que necesitas: **Todos los días** usa la fecha de inicio; **Días de la semana** muestra los días circulares para marcar; **Cada cierto número de días** muestra el intervalo; **Una vez al mes** permite elegir una fecha en el calendario. Esa fecha fija el día mensual y el comienzo, y se muestra la siguiente ocurrencia automáticamente. Por ejemplo, el día 3 se repite el 3 de diciembre después del 3 de noviembre. Si un mes no tiene el día elegido, Wello usa el último día.
+
+Los campos de meta y unidad aparecen sólo con **Registrar una cantidad**. Las metas pueden ser por día o por semana, de lunes a domingo. El detalle conserva los registros semanales sin ocupar una tarjeta grande en la lista.
 
 Para agua u otras cantidades, captura el total de ese día. Una nueva edición reemplaza esa cantidad, no la suma dos veces. Una meta semanal suma los registros de su semana. En Inicio, el check de un hábito con cantidad abre la captura: no inventa un volumen ni da crédito por estar programado.
 
@@ -22,7 +26,13 @@ En **Mi mood de hoy**, selecciona una fecha, una de las seis caritas y una nota 
 
 ## Mascotas
 
-Crea un perfil por mascota. Registra vacunas, próxima aplicación, paseos, trucos y entrenamientos, alimentación y baños. **Necesita cuidados** muestra el formulario de medicamentos. Al desactivarlo se conserva el historial. La app solo registra lo que tú capturas; no propone tratamientos.
+Crea un perfil por mascota con nombre, tipo, cumpleaños y sexo. Puedes agregar una foto JPEG, PNG o WebP, previsualizarla, cambiarla o quitarla al editar el perfil. Se reduce proporcionalmente y se guarda dentro de los datos locales, sin publicar el archivo ni enviar la foto a un servicio externo. Si la imagen no se puede leer o es demasiado grande, se pide otra; HEIC necesita convertirse primero. La foto también forma parte de tus copias privadas.
+
+**Agregar actividad** abre un menú de categorías con iconos. Después de elegir vacuna, paseo, entrenamiento, alimentación o baño, sólo se muestran los campos de esa actividad; ya no hay un formulario con campos de todas las categorías a la vez. Los medicamentos aparecen al activar **Necesita cuidados**. Desactivar cuidados conserva las administraciones y permite editar el historial.
+
+En el catálogo de **Trucos**, usa **Registrar práctica** junto al truco: el formulario ya lleva el truco elegido. Al guardar se añade una actividad con fecha y anotaciones. Las prácticas se ven en el historial y el catálogo mantiene la referencia del truco que se trabajó.
+
+Para una mascota **hembra**, usa el seguimiento de **Celo** para registrar inicio, final opcional y anotaciones. El final debe ser igual o posterior al inicio. El historial muestra duración e intervalos observados cuando hay registros suficientes; no calcula un próximo celo ni da indicaciones clínicas. Puedes cerrar o corregir un registro al editarlo. En Calendario se muestran los días registrados; un registro sin final muestra sólo el inicio, sin inventar una duración ni una fecha de finalización. Cambiar el sexo del perfil no borra el historial previo.
 
 ## Alimentos
 
@@ -36,7 +46,9 @@ En **Compras** registra un ticket y su desglose, o una sola línea por producto.
 
 Alterna **Mes** y **Agenda**, elige mes y filtra Hábitos, Gym, Mascotas o Citas personales. Los eventos proceden de los mismos registros; no son copias independientes. Crea una cita con hora o todo el día.
 
-**Exportar al iPhone** descarga un `.ics` del mes y filtro visibles. Los moods y sus notas son opciones separadas; por defecto no se exportan. Los horarios usan `America/Mexico_City`. Abre el archivo en Calendario del iPhone; si queda en Descargas, ábrelo desde Archivos o envíalo a tu correo. Esto no es una suscripción ni sincronización bidireccional.
+Las actividades conservan el color de su sección: Mascotas amarillo, Gym lavanda y citas menta. Cada hábito utiliza la muestra de color que le asignaste; mood usa el rosa de Hábitos. Los colores aparecen en marcadores de Mes, filas de Agenda, detalles y leyenda.
+
+**Exportar al iPhone** abre un diálogo donde eliges **Sólo mascotas**, **Sólo hábitos**, **Sólo Gym**, **Sólo citas personales** o **Todas las actividades**, además del mes. No necesitas cambiar el filtro que estás consultando en pantalla. Los moods y sus notas son opciones separadas dentro de Hábitos o Todas; por defecto no se exportan. Los horarios usan `America/Mexico_City`. Abre el archivo `.ics` en Calendario del iPhone; si queda en Descargas, ábrelo desde Archivos o envíalo a tu correo. Elige el calendario de destino en Apple: el color allí depende de ese calendario, no de los marcadores de Wello. Esto no es una suscripción ni sincronización bidireccional.
 
 ## Hogares y copias
 

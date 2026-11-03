@@ -1,0 +1,491 @@
+/* Hábitos v2: una lista ligera, con el registro al frente y sin tarjetas amplias. */
+.habit-list {
+  background: #fff;
+  border: 1px solid #e5ebe9;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.habit-row-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  align-items: stretch;
+  border-bottom: 1px solid #edf1ef;
+  border-left: 4px solid var(--habit-color, var(--accent));
+}
+
+.habit-row-shell:last-child {
+  border-bottom: 0;
+}
+
+.habit-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  width: 100%;
+  min-height: 86px;
+  padding: 12px 10px 12px 14px;
+  background: #fff;
+  text-align: left;
+}
+
+.habit-row:hover,
+.habit-row:focus-visible {
+  background: #fcf8fa;
+}
+
+.habit-row-icon,
+.habit-detail-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #744261;
+  background: color-mix(in srgb, var(--habit-color, var(--soft)) 58%, #fff);
+  border-radius: 13px;
+}
+
+.habit-row-icon {
+  width: 38px;
+  height: 38px;
+}
+
+.habit-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.habit-row-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.habit-row-title strong {
+  overflow: hidden;
+  color: #283541;
+  font-size: 14px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.habit-row-scope {
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border-radius: 12px;
+  background: #f7dceb;
+  color: #853461;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.habit-row-specific,
+.habit-row-goal {
+  overflow: hidden;
+  color: #637079;
+  font-size: 11px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.habit-row-goal {
+  color: #7c4b68;
+  font-weight: 650;
+}
+
+.habit-row-week,
+.habit-detail-week {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.habit-row-week {
+  margin: 3px 0 1px;
+}
+
+.habit-week-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid #e1e8e4;
+  border-radius: 50%;
+  color: #96a19b;
+  font-size: 8px;
+  font-weight: 650;
+}
+
+.habit-week-mark.is-scheduled {
+  border-color: #d7c3cf;
+  color: #7d6773;
+}
+
+.habit-week-mark.is-done {
+  border-color: #a4487c;
+  background: #a4487c;
+  color: #fff;
+}
+
+.habit-row-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca8a2;
+}
+
+.habit-row-check {
+  align-self: center;
+  justify-self: center;
+  width: 34px;
+  height: 34px;
+  border: 1.5px solid #d1deda;
+  border-radius: 50%;
+  background: #fff;
+  color: #9aa9a1;
+}
+
+.habit-row-check:hover,
+.habit-row-check:focus-visible {
+  border-color: #a4487c;
+  color: #a4487c;
+}
+
+.habit-row-check.is-done {
+  border-color: #8a406c;
+  background: #8a406c;
+  color: #fff;
+}
+
+.habit-frequency-fields,
+.habit-type-fields {
+  margin-top: 4px;
+  padding: 14px 16px;
+  border-radius: 15px;
+  background: #fcf7fa;
+}
+
+.habit-frequency-group[hidden],
+.habit-type-group[hidden] {
+  display: none;
+}
+
+.habit-frequency-group > .field:last-child,
+.habit-type-group > .field:last-child {
+  margin-bottom: 0;
+}
+
+.habit-weekday-field {
+  margin: 7px 0 0;
+}
+
+.habit-weekday-field legend,
+.habit-icon-picker legend,
+.color-picker legend {
+  font-size: 12px;
+}
+
+.habit-week-pick {
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.habit-week-pick label {
+  width: 36px;
+  height: 36px;
+}
+
+.habit-week-pick input:disabled + span {
+  opacity: .65;
+}
+
+.habit-icon-picker {
+  margin: 16px 0 0;
+}
+
+.habit-icon-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.habit-icon-option {
+  position: relative;
+  display: flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d9e3df;
+  border-radius: 13px;
+  background: #fff;
+  color: #596a65;
+  cursor: pointer;
+}
+
+.habit-icon-option:hover {
+  border-color: #a4487c;
+  color: #853461;
+}
+
+.habit-icon-radio:checked + .habit-icon-visual {
+  color: #853461;
+}
+
+.habit-icon-option:has(.habit-icon-radio:checked) {
+  border-color: #853461;
+  background: #f7dceb;
+  box-shadow: 0 0 0 2px #fff inset;
+}
+
+.habit-icon-option:has(.habit-icon-radio:focus-visible) {
+  outline: 3px solid #375ea3;
+  outline-offset: 3px;
+}
+
+.habit-icon-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.habit-check-help {
+  margin: 0;
+}
+
+.habit-quantity-fields {
+  column-gap: 12px;
+  row-gap: 0;
+}
+
+.habit-monthly-preview {
+  margin: 3px 0 0;
+  color: #853461;
+  font-weight: 650;
+}
+
+.habit-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.habit-detail-identity {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding-bottom: 3px;
+}
+
+.habit-detail-icon {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 auto;
+}
+
+.habit-detail-identity .eyebrow {
+  margin-bottom: 2px;
+}
+
+.habit-detail-identity h3 {
+  font-size: 19px;
+}
+
+.habit-detail-section {
+  padding-top: 14px;
+  border-top: 1px solid #e8edeb;
+}
+
+.habit-detail-section > h3,
+.habit-detail-section .section-head h3 {
+  margin-bottom: 10px;
+  font-size: 14px;
+  letter-spacing: -.01em;
+}
+
+.habit-detail-stat {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 13px;
+  border-radius: 12px;
+  background: #fcf7fa;
+  color: #64716f;
+  font-size: 12px;
+}
+
+.habit-detail-stat strong {
+  color: #853461;
+  text-align: right;
+}
+
+.habit-detail-stat strong.is-muted {
+  color: #84918c;
+}
+
+.habit-detail-week {
+  justify-content: space-between;
+  gap: 7px;
+}
+
+.habit-detail-day {
+  display: flex;
+  flex: 1 1 0;
+  max-width: 46px;
+  min-height: 48px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 1px solid #e1e8e4;
+  border-radius: 11px;
+  color: #9ba6a0;
+}
+
+.habit-detail-day b {
+  font-size: 10px;
+}
+
+.habit-detail-day small {
+  line-height: 1;
+}
+
+.habit-detail-day.is-done {
+  border-color: #d39abe;
+  background: #f7dceb;
+  color: #853461;
+}
+
+.habit-detail-day.is-current {
+  outline: 2px solid #853461;
+  outline-offset: 1px;
+}
+
+.habit-detail-history .list-row {
+  padding: 9px 0;
+}
+
+.habit-detail-history .list-row > svg {
+  color: #a4487c;
+}
+
+.habit-detail > .btn {
+  align-self: flex-start;
+  margin-top: -3px;
+}
+
+.mood-banner {
+  min-height: 0;
+  padding: 21px 27px;
+}
+
+@media (max-width: 800px) {
+  .habit-row {
+    grid-template-columns: 38px minmax(0, 1fr) 20px;
+    gap: 9px;
+    min-height: 82px;
+    padding-left: 10px;
+  }
+
+  .habit-row-shell {
+    grid-template-columns: minmax(0, 1fr) 45px;
+  }
+
+  .habit-row-title strong {
+    font-size: 13px;
+  }
+
+  .habit-row-specific,
+  .habit-row-goal {
+    font-size: 10px;
+  }
+
+  .habit-week-mark {
+    width: 17px;
+    height: 17px;
+  }
+
+  .habit-row-check {
+    width: 32px;
+    height: 32px;
+  }
+
+  .mood-banner {
+    padding: 19px 21px;
+  }
+}
+
+@media (max-width: 600px) {
+  .habit-row-shell {
+    grid-template-columns: minmax(0, 1fr) 43px;
+  }
+
+  .habit-row {
+    grid-template-columns: 35px minmax(0, 1fr) 17px;
+    gap: 8px;
+    min-height: 78px;
+    padding: 10px 6px 10px 8px;
+  }
+
+  .habit-row-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .habit-row-scope {
+    display: none;
+  }
+
+  .habit-row-week {
+    gap: 3px;
+  }
+
+  .habit-week-mark {
+    width: 16px;
+    height: 16px;
+    font-size: 7px;
+  }
+
+  .habit-frequency-fields,
+  .habit-type-fields {
+    padding: 12px;
+  }
+
+  .habit-icon-options {
+    gap: 8px;
+  }
+
+  .habit-icon-option {
+    width: 42px;
+    height: 42px;
+  }
+
+  .habit-detail-stat {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+  }
+
+  .habit-detail-stat strong {
+    text-align: left;
+  }
+}
+
+/* Los detalles viven en el diálogo, no en cada fila. */
+.habit-row { min-height:60px; padding-top:8px; padding-bottom:8px; }
+.habit-row-main strong { font-size:14px; line-height:1.4; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.habit-row-shell { grid-template-columns:minmax(0,1fr) 52px; }
+.habit-row-check { width:44px; height:44px; }
+.habit-icon-option { width:44px; height:44px; }
+.habit-icon-radio { position:absolute; inset:0; width:100%; height:100%; opacity:0; clip:auto; margin:0; cursor:pointer; }
+@media(max-width:600px) { .habit-row { min-height:58px; } .habit-row-main strong { font-size:13px; } }

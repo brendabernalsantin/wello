@@ -1,0 +1,53 @@
+/* Wello · mascotas v2. El build principal concatena este archivo después de styles.css. */
+.pets-module .pet-card{--pet-accent:#C29822}
+.pet-category-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:2px 0 18px}
+.pet-category-card{display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-height:128px;padding:17px;text-align:left;border:1px solid #E7E0C5;border-radius:17px;background:#FFFDF3;color:#283541;cursor:pointer;transition:transform .16s,box-shadow .16s,border-color .16s}
+.pet-category-card:hover{transform:translateY(-2px);border-color:#D8AF3C;box-shadow:0 9px 22px #A87E1D1A}
+.pet-category-card:focus-visible{outline:3px solid #375EA3;outline-offset:2px}
+.pet-category-card strong{font-size:13px}
+.pet-category-icon{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:12px;background:#FFF0BE;color:#8A6414}
+.pet-category-card .small{line-height:1.45}
+.pet-icon-fallback{display:inline-flex;width:1.15em;height:1.15em;align-items:center;justify-content:center;position:relative;color:currentColor}
+.pet-icon-fallback::before{font-size:.9em;line-height:1}
+.pet-icon-paw-print::before{content:'✦'}
+.pet-icon-heart::before{content:'♥';font-size:.82em}
+.pet-icon-syringe::before{content:'+';border:1.5px solid currentColor;border-radius:3px;font-size:.7em}
+.pet-icon-footprints::before{content:'••';letter-spacing:2px;transform:rotate(-24deg)}
+.pet-icon-sparkles::before{content:'✧'}
+.pet-icon-utensils::before{content:'≡';font-weight:800}
+.pet-icon-droplets::before{content:'◦';font-size:1.35em}
+.pet-icon-pill::before{content:'—';border:1.5px solid currentColor;border-radius:8px;font-size:.75em}
+.pet-icon-upload::before{content:'↑';font-weight:800}
+.pet-icon-image::before{content:'▧';font-size:1.1em}
+.pet-icon-circle::before{content:'•'}
+.pet-photo-editor{display:flex;align-items:center;gap:17px;padding:14px 0 8px;border-top:1px solid #E9EEEC;border-bottom:1px solid #E9EEEC;margin:6px 0 17px}
+.pet-photo-preview-wrap{display:flex;align-items:center;justify-content:center;width:104px;height:104px;min-width:104px;border-radius:22px;overflow:hidden;background:#FFF6D8;border:1px solid #F1E1A8}
+.pet-photo-preview{display:block;width:100%;height:100%;object-fit:cover}
+.pet-photo-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:#9A7A2F;font-size:10px;text-align:center}
+.pet-photo-controls{display:flex;align-items:flex-start;flex-direction:column;gap:6px;min-width:0}
+.pet-photo-controls .btn{min-height:37px;padding:8px 12px;font-size:11px}
+.pet-photo-file-label{position:relative;overflow:hidden;cursor:pointer}
+.pet-photo-file-label input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.pet-photo-file-label:focus-within{outline:3px solid #375EA3;outline-offset:2px}
+.pet-photo-controls .small{margin:0;line-height:1.45}
+.pet-avatar{overflow:hidden}
+.pet-avatar .pet-photo{width:100%;height:100%;object-fit:cover}
+.pet-card .pet-photo{display:block}
+.pet-trick-row{align-items:flex-start}
+.pet-trick-row>div:first-child{flex:1}
+.pet-trick-row .row{justify-content:flex-end}
+.pet-trick-stats{display:block;color:#6D7E76;font-size:10px;margin-top:7px}
+.pet-fixed-activity-form{align-items:start}
+.pet-fixed-activity-form .field{min-width:0}
+.pet-activity-main .chip{background:#FFF0BE;color:#775916}
+.pet-heat-summary{display:block;color:#6D7E76}
+@media(max-width:600px){
+  .pet-category-grid{grid-template-columns:1fr 1fr;gap:9px}
+  .pet-category-card{min-height:116px;padding:13px}
+  .pet-category-card strong{font-size:11px}
+  .pet-category-card .small{font-size:9px}
+  .pet-photo-editor{align-items:flex-start}
+  .pet-photo-preview-wrap{width:83px;height:83px;min-width:83px;border-radius:17px}
+  .pet-photo-controls .btn{font-size:10px}
+  .pet-trick-row .row{width:100%;justify-content:flex-start}
+}

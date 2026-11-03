@@ -36,6 +36,9 @@ export function upsertMood(state,date,mood,note='') {
   const record={id:`mood:${date}`,date,mood,note};
   state.personal.moods=state.personal.moods.filter(m=>m.date!==date); state.personal.moods.push(record); return record;
 }
+export function validPetPhoto(value) {
+  return value === '' || value == null || (typeof value === 'string' && value.length <= 350000 && /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(value));
+}
 export function validateState(data) {
   if(!data||typeof data!=='object'||Array.isArray(data)) throw Error('La copia no contiene un objeto válido.');
   if(!data.personal||!Array.isArray(data.households)||!data.households.length) throw Error('Faltan las colecciones de Wello.');
@@ -56,9 +59,13 @@ export function validateState(data) {
   for(const home of data.households){
     for(const pet of home.pets){
       if(typeof pet.name!=='string'||typeof pet.type!=='string'||(pet.birthday&&!validDate(pet.birthday)))throw Error('Un perfil de mascota no es válido.');
+      if(pet.sex!=null&&!['female','male','unknown'].includes(pet.sex))throw Error('El sexo registrado de una mascota no es válido.');
+      if(!validPetPhoto(pet.photo))throw Error('La foto debe ser una imagen local JPEG, PNG o WebP de hasta 350 KB.');
       if(pet.activities&&!Array.isArray(pet.activities))throw Error('El historial de mascota no es válido.');
+      unique(pet.activities||[],'actividades de una mascota');
       for(const a of pet.activities||[]){
         if(typeof a.id!=='string'||!validDate(a.date)||(a.time&&!validTime(a.time))||(a.nextDate&&!validDate(a.nextDate)))throw Error('Una actividad de mascota tiene fecha, hora o identificador inválidos.');
+        if(a.type==='heat'&&a.endDate&&(!validDate(a.endDate)||a.endDate<a.date))throw Error('El final del celo no puede ser anterior al inicio.');
       }
     }
     for(const item of home.inventory)if(typeof item.name!=='string'||!Number.isFinite(Number(item.quantity??item.stock))||Number(item.quantity??item.stock)<0||(item.expiration&&!validDate(item.expiration)))throw Error('Un alimento del inventario no es válido.');

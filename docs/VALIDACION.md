@@ -1,4 +1,4 @@
-# Validación de la primera entrega de Wello
+# Validación de Wello: primera entrega y revisión v2
 
 Fecha de ejecución: 3 de noviembre de 2026. Entorno: Ubuntu, Node 22 y Chromium automatizado con Playwright. Datos de pruebas sintéticos; las cargas privadas nunca se precargaron en el HTML.
 
@@ -46,3 +46,15 @@ node tests/pages-ui.mjs
 ```
 
 Las pruebas de interfaz usan `/usr/bin/chromium`. Si está en otra ruta, ajusta `executablePath` en los tres archivos `.mjs` de `tests/`. El proyecto no instala Chrome en la computadora de la usuaria. Para revisar manualmente la app local basta con abrir `Wello.html`.
+
+## Revisión v2: ajustes de Hábitos, Mascotas y Calendario
+
+La revisión del 3 de noviembre conserva el formato v3 y añade únicamente campos opcionales a los perfiles y actividades. `npm test` pasó 69 de 69 pruebas. Las regresiones nuevas comprueban iconos visibles, filas sin semana/metas en la lista, controles de frecuencia condicionales, día mensual real y compatibilidad de hábitos mensuales anteriores, fotos raster privadas, registros de celo con fechas observadas, prácticas vinculadas, colores del calendario y filtros ICS. Los guardados fallidos de hábitos, cantidades, moods, citas y registros de mascota restauran los datos anteriores; los días no programados no reciben registros nuevos accidentales.
+
+`tests/revision-v2-ui.mjs` pasó **13 de 13 casos** y verifica las interacciones de esta revisión desde file://: elección de los seis dibujos, edición desde detalle, cantidades parciales, días semanales, intervalo, próximo 3 de diciembre, fotos realmente decodificadas con lado máximo 640 y proporción conservada, guardado inmediato durante procesamiento, cambio y eliminación de foto, categorías y campos pertinentes, práctica desde catálogo, celo con final inválido rechazado y duraciones/intervalos observados, colores en Mes y Agenda y descargas separadas sólo Mascotas/sólo Hábitos. Incluye cancelación de un procesamiento pendiente sin guardar el perfil ni cerrar otro formulario, exportación privada con foto/celo/prácticas, recarga sin conexión y 30 hábitos a 320, 390, 768, 1024 y 1440 px.
+
+Se identificaron y corrigieron en Chromium dos problemas reales de imagen: no se puede usar `toDataURL` en OffscreenCanvas nativo y la llamada a `createImageBitmap` necesita su receptor nativo. El editor usa canvas HTML y decodificación enlazada correctamente. Una foto original no se adjunta al código ni al ZIP: sólo se almacena, optimizada, en los registros de la persona que la carga.
+
+El archivo .ics se comprobó por contenido y descarga. La importación física en Apple sigue pendiente; Apple asigna el color según el calendario de destino y no se promete trasladar el color de cada fila de Wello. Celo sin final registrado exporta sólo el inicio, no una duración inferida. No se configuraron cuentas, no se activaron servicios ni se publicó la revisión.
+
+Para repetir la revisión: `npm run export:html && node tests/revision-v2-ui.mjs`. Los datos de prueba y las capturas están en `artifacts/`, excluidos del paquete publicable.

@@ -7,3 +7,20 @@
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 
 .swatch>span,.mood-option>img,.mood-option>span{pointer-events:none}.swatch input,.mood-option input{z-index:1}
+
+/* Calendario: colores de origen, no un único acento verde. */
+.calendar-legend { display:flex; align-items:center; flex-wrap:wrap; gap:10px 18px; margin:0 0 20px; color:#586570; font-size:11px; }
+.calendar-legend > span { display:inline-flex; align-items:center; gap:7px; }
+.calendar-legend i,.filter-pill > i { display:inline-block; width:10px; height:10px; border-radius:50%; flex-shrink:0; border:1px solid #28354122; }
+.calendar-legend small { font-size:10px; flex-basis:100%; }
+.filter-pill { display:inline-flex; align-items:center; gap:6px; }
+.filter-pill[data-filter]:not([data-filter=all]).active { background:var(--filter-soft); border-color:var(--filter-color); color:#283541; }
+.calendar-event { border-left:4px solid var(--event-color); padding-left:13px; padding-right:8px; margin:5px 0; border-radius:8px; }
+.calendar-event .event-symbol,.calendar-event.type-habitos .event-symbol,.calendar-event.type-gym .event-symbol,.calendar-event.type-mascotas .event-symbol { background:var(--event-soft); border:1px solid var(--event-color); color:#283541; flex-shrink:0; }
+.calendar-event:hover { background:var(--event-soft); }
+.calendar-detail-accent { border-left:5px solid var(--event-color); background:var(--event-soft); border-radius:10px; padding:15px 18px; margin-bottom:16px; }
+.event-dots { justify-content:center; flex-wrap:wrap; height:auto; min-height:10px; max-width:100%; }
+.dot { width:7px; height:7px; border:1px solid #28354130; }
+.month-day.selected { border-color:#687D99; background:#F2F5F9; }
+.agenda-day h3 { color:#586570; }
+@media(max-width:600px) { .calendar-legend { gap:7px 12px; font-size:10px; } .calendar-event { padding-left:9px; gap:10px; } .dot { width:5px; height:5px; } }

@@ -1,6 +1,6 @@
 # Criterios de entrega Wello
 
-Estado de entrega: paridad local implementada y validada con 45 pruebas de lógica, 12 flujos UI, 6 casos UI adicionales y el flujo Pages pendiente de configuración. Ver docs/VALIDACION.md.
+Estado de entrega: revisión v2 implementada y validada con 69 pruebas de lógica, 13 casos UI nuevos, 12 flujos UI previos, 6 adicionales y el flujo Pages sin servicios. Ver docs/VALIDACION.md.
 
 - [x] HTML local autocontenido, navegación de seis entradas, Gym, Inicio, Hábitos/mood, Mascotas, Alimentos, Calendario, hogares y copias.
 - [x] Compilación estática de vista previa, SDK oficial Auth PKCE, separación de cuentas y pruebas simuladas.
@@ -173,3 +173,15 @@ Cada fila es una entrada independiente dentro de su rutina, aunque el nombre apa
 | `d4-fly` | Pecho | Pectoral fly en máquina | 3 | 12 |
 | `d4-horizontal` | Pecho | Press en banco horizontal con barra | 3 | 10 |
 
+
+## Revisión v2 solicitada
+
+- [x] Icono visible en el selector de hábitos: dibujos seleccionables, no opciones sólo en texto; selección/foco accesibles y valor persistente.
+- [x] Mascotas hembra: registrar y editar inicio/final del celo, notas, duración e intervalos observados para monitoreo; conservar registros y no inventar próximas fechas clínicas.
+- [x] Imagen de mascota: agregar, previsualizar, guardar, cambiar y quitar foto local, con reducción proporcional y validación; persistir al recargar y exportar/importar.
+- [x] Catálogo de trucos: poder registrar cuándo se practicó desde cada truco, enlazar el registro al truco correcto y conservar historial.
+- [x] Agregar actividad de mascota: menú con categorías claras e iconos y formularios específicos con sólo campos relevantes y validación coherente; conservar edición de historial y medicamentos.
+- [x] Calendario: colores según módulo y muestra elegida en cada hábito, aplicados en Mes, Agenda, detalles y leyenda; no todo verde.
+- [x] Exportación al iPhone: seleccionar filtro dentro del diálogo (sólo mascotas, sólo hábitos, Gym, citas o todas), mes y moods/notas opcionales; ICS debe contener sólo la selección.
+- [x] Frecuencia de hábito: días marcados sólo para días de la semana; intervalo sólo para cada N días; mensual abre calendario real para seleccionar día, guarda recurrencia y muestra la próxima fecha automáticamente (ejemplo 3 de diciembre).
+- [x] Hábitos compactos: listar icono/nombre y check; el detalle y la edición se despliegan al presionar el hábito; no tarjetas grandes por hábito. Cantidades/semana conservadas en detalle y check cuantitativo sin inventar cantidades.

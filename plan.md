@@ -10,3 +10,11 @@ Estética de bienestar colorida y amigable, tarjetas amplias redondeadas y tipog
 
 ## Alcance verificable
 Paridad local: sesiones parciales Gym, cantidades hábitos y mood, perfiles y registros mascotas, inventario y compras, estimados, calendario e ICS, hogares aislados, copias e importación y ruta NFC. Preparación online: Auth PKCE, separación de caché por cuenta, modelo hogares y RLS, operaciones idempotentes y concurrencia explícita. Lo dependiente de Google/Supabase, invitaciones reales, permisos, publicación o iPhone físico se describe como pendiente, no como verificado.
+
+## Revisión solicitada el 3 de noviembre (v2)
+
+Se conserva el almacenamiento v3 y se añaden campos opcionales sin borrar registros. Hábitos pasa a lista compacta con icono, nombre y check; un diálogo de detalle contiene meta, semana, cantidades y edición. El selector de iconos usa dibujos visibles, etiquetas accesibles y borde de selección, no un menú de nombres. La frecuencia muestra sólo días semanales, intervalo o calendario mensual según la opción; el día mensual se toma de una fecha real y previsualiza la siguiente ocurrencia (por ejemplo 3 de diciembre después del 3 de noviembre). Las metas cuantitativas mantienen captura explícita.
+
+Mascotas añade sexo y foto local raster reducida proporcionalmente para guardado autocontenido; el archivo original no se publica ni se conserva completo. Se puede cambiar o quitar la foto. En hembras, el seguimiento registra inicio y final opcional del celo, notas, duración e intervalo observado, sin predicciones clínicas. Sin final registrado sólo se muestra el inicio en Calendario; no se infiere una duración. Se conserva historial si se cambia el sexo. Trucos ofrece registrar una práctica desde su catálogo enlazada a una actividad real. Agregar actividad abre una selección visual y después un formulario específico (vacuna, paseo, entrenamiento, alimentación, baño; cuidados y celo según perfil), sin campos inconexos ni títulos obligatorios redundantes.
+
+Calendario usa los colores de cada módulo y, para hábitos, la muestra elegida para ese hábito; los iconos ayudan a distinguir. Exportar al iPhone ofrece un filtro explícito dentro del diálogo, independiente del filtro visible, además del mes y consentimiento separado para moods/notas. No se cambia la configuración ni se publica en servicios externos.
