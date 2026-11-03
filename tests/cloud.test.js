@@ -213,17 +213,19 @@ test('un conflicto conserva la revisión CAS confiable para el siguiente intento
     return builder;
   };
   const client = {
+    auth: { getSession: async () => ({ data: { session: { access_token: 'access-token-user-a', user: { id: userId } } }, error: null }) },
     from(table) {
       if (table === 'private_records') return queryBuilder([remote]);
       if (table === 'household_members') return queryBuilder([]);
       return queryBuilder([]);
     },
-    rpc() { return Promise.resolve({ data: null, error: { code: 'WELLO_REVISION_CONFLICT', message: 'revision conflict' } }); },
   };
+  client._boundRpc = () => Promise.resolve({ data: null, error: { code: 'WELLO_REVISION_CONFLICT', message: 'revision conflict' } });
   const controller = new WelloCloudController({
     app: { getState() { return { version: 3, personal: { moods: [{ id: 'local' }] }, households: [] }; } },
     localStorage,
     configResult: { ok: true, config: { url: 'https://project.supabase.co', key: 'sb_publishable_test', mode: 'production' }, message: 'ok' },
+    createClient() { return { rpc: (...args) => client._boundRpc(...args) }; },
   });
   controller.client = client;
   await controller.handleSession('SIGNED_IN', { user: { id: userId } });

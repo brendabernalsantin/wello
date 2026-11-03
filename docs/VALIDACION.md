@@ -58,3 +58,23 @@ Se identificaron y corrigieron en Chromium dos problemas reales de imagen: no se
 El archivo .ics se comprobó por contenido y descarga. La importación física en Apple sigue pendiente; Apple asigna el color según el calendario de destino y no se promete trasladar el color de cada fila de Wello. Celo sin final registrado exporta sólo el inicio, no una duración inferida. No se configuraron cuentas, no se activaron servicios ni se publicó la revisión.
 
 Para repetir la revisión: `npm run export:html && node tests/revision-v2-ui.mjs`. Los datos de prueba y las capturas están en `artifacts/`, excluidos del paquete publicable.
+
+## Fase online familiar: estado más reciente
+
+Las secciones anteriores describen el estado histórico de la primera entrega y la revisión v2; las limitaciones de configuración externa de esas fases se actualizan aquí.
+
+Se creó el proyecto Supabase Wello `hpdefigzmgvqvgylvydh` en la organización confirmada, con cotización $0/mes aceptada. Se aplicaron las migraciones de hogares/roles/blobs/RPC/RLS y la corrección de vigencia máxima de invitaciones a siete días. El fixture `supabase/tests/production-rls.sql` ejecutó **45 aserciones en PostgreSQL real**, con tres usuarios sintéticos, dos hogares, roles authenticated/anon y rollback. Reportó success=true. Se verificó después cero usuarios y hogares de fixture persistidos. Una llamada HTTP pública a private_records y household_records fue rechazada; no se concedió lectura amplia para resolver los avisos del Advisor.
+
+Las aserciones incluyen lectura privada sólo propia, hogar sólo miembros, RPC de hogar para miembro y rechazo a outsider, denegación de escrituras directas y ascenso de rol, CAS con revisión obsoleta, retry de operación y rechazo de payload/ámbito/revisión distintos, email confirmado y coincidente, token consumido/revocado/expirado, reemplazo de invitación vencida, owner protegido, salida y retiro. Son pruebas transaccionales de las reglas del backend, no sesiones reales de Google ni una prueba de concurrencia de dos teléfonos físicos.
+
+El repositorio brendabernalsantin/wello se creó y conectó; se hizo público tras autorización explícita. Se comprobó que los archivos versionados no incluyen respaldos privados, fotos capturadas ni claves administrativas. Los artifacts y datos privados siguen excluidos. La configuración del build usa únicamente URL de Supabase y clave publicable.
+
+La revisión independiente de colaboración detectó carreras de cuenta en peticiones, bootstrap personal y reapertura de hogares revocados, importación local sin confirm=true, reintento de creación y divergencia de nombres. Se prioriza corregir esos problemas antes de subir el artefacto final. Las pruebas de UI de hogares y SQL se ampliaron; no se presenta una suite simulada como autenticación real.
+
+El manifiesto actualizado contiene 11 rutas y se comprobó GET /manus-routes.json HTTP200 JSON idéntico al archivo. El whitespace señalado en el bundle online proviene de un literal del SDK minificado; no se altera ese literal a ciegas. El código fuente y scripts pasan la comprobación de whitespace y sintaxis.
+
+**Pendiente:** activar Google en la cuenta de la propietaria, configurar callbacks/Site URL/Redirect URLs exactos, habilitar Pages desde gh-pages y verificar HTTP del artefacto, entrar con dos familiares reales y probar sincronización. También siguen pendientes iPhone, Safari/Calendario Apple y NFC físicos. La [guía manual de Google](ACTIVAR-GOOGLE.md) no pide compartir secretos por chat.
+
+### Resultado posterior a las correcciones de colaboración
+
+`npm test` final pasó **92/92** y `npm run check` pasó. Se añadieron regresiones para el JWT de la cuenta que inició la escritura, guards de generación/namespace, bootstrap personal conservado, baseline tras aceptar una invitación, revocación sin resucitar hogares y nombres canónicos. La creación conserva el operation ID para reintentar una respuesta perdida. La UI confirmó importación con confirm=true y protege los diálogos de respuestas de sesiones anteriores. Se regeneraron HTML local y build production. Esto no sustituye la validación pendiente de OAuth Google y de dos familiares reales.

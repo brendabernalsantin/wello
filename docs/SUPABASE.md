@@ -1,121 +1,47 @@
-# Supabase para Wello
+# Supabase real para Wello
 
-Esta integración es la variante en línea. La variante local no importa `src/cloud.js`, no carga `@supabase/supabase-js` y no necesita una cuenta. El bundle online se agrega por separado después del bundle de la app y expone `window.WelloCloud`.
+## Estado al 3 de noviembre de 2026
 
-## Estado de esta entrega
+El proyecto **Wello**, ref `hpdefigzmgvqvgylvydh`, está creado y activo en **brendabernalsantin's Org**, región us-east-1, con cotización aceptada de **$0 al mes** y sin extras o planes de pago autorizados. API: https://hpdefigzmgvqvgylvydh.supabase.co . Panel: https://supabase.com/dashboard/project/hpdefigzmgvqvgylvydh .
 
-Quedaron preparados el cliente oficial `@supabase/supabase-js` con Auth Google y flujo PKCE, la validación de `window.WELLO_CONFIG`, el namespace por cuenta, la migración PostgreSQL y el diseño de sincronización CAS. No se configuró un proyecto externo, no se inició sesión con Google y no se ejecutaron las políticas contra una base real en este entorno.
+La migración `supabase/migrations/001_wello.sql` se aplicó correctamente. El fixture `supabase/tests/production-rls.sql` ejecutó **45 comprobaciones** en la base real usando roles `authenticated` y `anon`, tres usuarios sintéticos y dos hogares, con `ROLLBACK`. Se comprobaron membresías, datos personales privados, invitaciones verificadas por correo, expiración, revocación, uso único, CAS e idempotencia. No se enviaron correos ni se dejaron registros de prueba. Esto no equivale a una sesión real de Google ni a dos teléfonos físicos conectados.
 
-Los roles owner/member, la creación y revocación de invitaciones, la eliminación de cuenta, las reglas de fusión y el proveedor que enviaría invitaciones siguen siendo propuestas. Confirma esas decisiones antes de habilitar datos reales.
+El proveedor Google todavía requiere configuración de la propietaria. Sigue [ACTIVAR-GOOGLE.md](ACTIVAR-GOOGLE.md). No se debe poner Client Secret, service-role, contraseña o token administrativo en el frontend, en este repositorio ni en Pages.
 
-## 1. Crear el proyecto
+## Qué se comparte
 
-1. En Supabase crea un proyecto llamado **Wello** y conserva el `Project URL` y la clave pública `publishable` (o la clave legacy `anon`).
-2. En el SQL Editor ejecuta `supabase/migrations/001_wello.sql` completo. Como alternativa, aplica la migración con la herramienta de CLI que ya use el repositorio; no hace falta guardar credenciales en este proyecto.
-3. No copies una `service_role`, una `sb_secret_...` ni la contraseña de la base al frontend, a Pages, a `.env`, a `window.WELLO_CONFIG` o al repositorio.
+`private_records` guarda el estado personal de la cuenta: Gym, hábitos personales, moods y citas. RLS restringe la lectura a `auth.uid()` y la escritura sólo se realiza por `upsert_private_record`, con revisión esperada y una operación idempotente.
 
-La migración usa `auth.users` como referencia, hogares UUID, membresías owner/member, invitaciones con hash y expiración, registros privados JSON y registros de hogar JSON. El cliente no puede elegir el rol `owner`: solo `create_household()` crea el hogar y su membresía owner usando `auth.uid()`.
+`household_records` guarda el estado familiar: mascotas, fotos raster optimizadas, celo, cuidados y trucos; hábitos del hogar; inventario, súper, tiendas y compras. Sólo una membresía vigente permite leer o guardar ese hogar. El blob debe usar el UUID del hogar en la clave y en el contenido; no acepta estado personal en su nivel superior. La interfaz pide una confirmación antes de compartir un hogar local.
 
-## 2. Configurar Google OAuth
+`households` y `household_members` definen los permisos reales. Quien crea el hogar se convierte en owner mediante una RPC que usa `auth.uid()`; el cliente no elige `created_by` ni asciende su rol. Owner puede renombrar, invitar, revocar enlaces y retirar miembros. Member edita los datos familiares y puede salir; no administra permisos. Las RPC de salida y retiro no eliminan al owner ni dejan el hogar sin propietario.
 
-En Google Cloud Console:
+Las fotos de mascotas son parte del blob privado del hogar, no archivos públicos del repositorio. Exportar una copia genera un JSON privado en el dispositivo: no debe subirse a GitHub.
 
-1. Selecciona o crea un proyecto para Wello.
-2. Configura la pantalla de consentimiento OAuth y agrega los datos de la aplicación según el estado de publicación que corresponda.
-3. Crea un cliente OAuth de tipo **Web application**.
-4. En **Authorized JavaScript origins** agrega el origen de Pages, por ejemplo `https://TU_USUARIO.github.io`, y el origen local que se use para una preview, por ejemplo `http://localhost:3000`.
-5. En **Authorized redirect URIs** agrega exactamente el callback de Supabase:
+## Invitaciones
 
-   ```text
-   https://TU-PROJECT-REF.supabase.co/auth/v1/callback
-   ```
+Owner crea un enlace dirigido a un correo concreto. Caduca a los 7 días por defecto, es de uso único y se puede revocar. El backend almacena un hash del token y verifica contra `auth.users.email` confirmado, no contra un campo del formulario. La persona entra con Google y confirma la aceptación; abrir el enlace no la acepta automáticamente.
 
-En Supabase abre **Authentication → Providers → Google**, activa Google y pega el Client ID y Client Secret de Google. El secreto queda en Supabase; no se publica ni se copia a GitHub Actions.
+Wello no envía correo automáticamente. La persona que invita copia y comparte el enlace por un canal privado. Un enlace revocado, vencido, consumido o dirigido a otro correo no concede acceso. `list_household_invites` muestra metadatos al owner sin exponer hashes de tokens.
 
-En **Authentication → URL Configuration** configura:
+## Sincronización y concurrencia
 
-```text
-Site URL:
-https://TU_USUARIO.github.io/primera-app/
+El cliente guarda una copia por cuenta en localStorage y separa mappings/baselines por usuario. Una edición agenda sincronización automática; además se refresca al volver a la app, recuperar red y cada 15 segundos mientras la página está visible. El modo local no publica nada automáticamente.
 
-Additional Redirect URLs:
-https://TU_USUARIO.github.io/primera-app/
-http://localhost:3000/
-```
+Cada escritura usa revisión CAS y un operation ID fresco. Las RPC usan locks para serializar carreras, incluido el primer insert, y un retry idéntico devuelve el resultado guardado. Reutilizar un ID con otro contenido, ámbito o revisión se rechaza. El cliente usa fusión de tres vías para cambios distintos; editar y borrar el mismo registro o modificar el mismo valor exige resolver un conflicto. No se usa last-write-wins silencioso. Antes de resolver, se conserva una copia automática por cuenta.
 
-Usa el puerto real de `npm start` o `npm run preview:pages` si es distinto. Mantén la barra final y el subdirectorio `/primera-app/`: el cliente conserva el retorno relativo a esa base y limpia los parámetros OAuth al terminar.
+La compra y transferencia a inventario se empaquetan juntas en el estado de hogar, con las reglas de idempotencia de dominio. La RPC legacy `record_purchase_and_inventory` conserva una transacción atómica para sus dos claves históricas, pero la interfaz actual sincroniza el blob de hogar completo.
 
-## 3. Configuración pública del build
+## Seguridad y avisos revisados
 
-Copia `.env.example` a un archivo de entorno local que no se publique y define:
+Los clientes tienen SELECT filtrado por RLS sobre hogares, membresías y blobs. No tienen INSERT/UPDATE/DELETE directos: las escrituras pasan por RPCs que validan sesión, rol, ámbito y CAS. `cloud_operations` y `household_invites` tienen RLS sin política y ningún grant de lectura directa: ese cierre es intencional.
 
-```text
-WELLO_SUPABASE_URL=https://TU-PROJECT-REF.supabase.co
-WELLO_SUPABASE_PUBLISHABLE_KEY=sb_publishable_TU_CLAVE_PUBLICA
-WELLO_DEPLOY_MODE=preview
-```
+Supabase Advisor reportó dos INFO de [RLS sin política](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy) en esas tablas cerradas y trece WARN de [SECURITY DEFINER ejecutable por autenticados](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable). Las RPC públicas necesitan esa condición para aplicar transacciones sin otorgar escritura directa; sus helpers internos no están concedidos al cliente, el search_path está fijado y los permisos se comprueban dentro de cada RPC. No se eliminan esos avisos concediendo acceso amplio ni se afirma que el Advisor esté sin advertencias.
 
-El build convierte esos valores en:
+Se verificó por HTTP que visitantes con la clave publicable obtienen rechazo de acceso a `private_records` y `household_records`. La clave publicable incluida en `wello-public-config.json` es pública por diseño y no concede acceso por sí sola. No se incluyen claves administrativas.
 
-```js
-window.WELLO_CONFIG = {
-  url: 'https://TU-PROJECT-REF.supabase.co',
-  key: 'sb_publishable_TU_CLAVE_PUBLICA',
-  mode: 'preview'
-};
-```
+## Repetir las pruebas
 
-En producción el modo debe ser `production`, la URL debe ser HTTPS y deben existir ambas variables. Si falta configuración o la clave parece privilegiada, el botón de Google permanece deshabilitado; no aparece un botón de configuración que pueda inducir a pegar secretos. La interfaz siempre ofrece **Continuar en modo local**.
+El fixture es DML transaccional sin DDL ni correos. Debe ejecutarse con una sesión administrativa autorizada capaz de `SET ROLE`, pues cambia temporalmente a los roles de cliente para probar RLS. No basta probar todo como postgres: ese rol puede saltar RLS. Termina siempre en rollback; las comprobaciones externas deben confirmar cero fixtures persistidos.
 
-## 4. Sesión y datos
-
-El cliente configura `flowType: 'pkce'` y usa `signInWithOAuth({ provider: 'google' })` seguido de `exchangeCodeForSession(code)`. El destino NFC permitido es únicamente `#super?accion=agregar`; se guarda temporalmente durante OAuth, se restaura al callback relativo de `/primera-app/`, se abre el formulario y se consume para que un recargo no lo repita.
-
-Al autenticar una cuenta, Wello cambia al namespace de esa cuenta, pero no importa el namespace local ni aplica blobs remotos automáticamente. La acción **Sincronizar ahora** es manual. Si existe una revisión remota distinta, el CAS rechaza el guardado, conserva el estado local y muestra conflicto para revisión; no hay last-write-wins silencioso. Cerrar sesión elimina el cache activo, vacía el estado de la capa cloud y vuelve a mostrar login sin exponer datos de otra cuenta.
-
-Los registros generales se modelan como:
-
-- `private_records`: un blob JSON personal por usuario (`wello:state:personal`).
-- `household_records`: blobs JSON por UUID real de hogar (`wello:state:household:<uuid>`).
-- `version`: versión de modelo Wello, actualmente 3.
-- `revision`: contador CAS que debe coincidir antes de cada actualización.
-
-Un id local de hogar no autoriza una fila remota. Primero crea un hogar real con `WelloCloud.createHousehold()`, confirma el UUID y registra el mapeo explícito con `setHouseholdMapping(localId, remoteId)`. La base vuelve a comprobar membresía aunque la solicitud se construya fuera de la interfaz.
-
-## 5. Invitaciones y compras atómicas
-
-`create_household_invite()` genera un token con hash, expiración y uso único, pero no manda correos. Es una **propuesta**: antes de producción hay que confirmar quién puede invitar, qué ocurre al revocar y qué proveedor de correo se usará. El rol de una invitación siempre se limita a `member`.
-
-`record_purchase_and_inventory()` actualiza los registros de inventario y compra dentro de una única función PostgreSQL. Si el segundo CAS falla, la transacción revierte ambas operaciones. El `operation_id` evita duplicados al reintentar la misma acción. La política de precios, unidades y revisión de líneas sigue siendo parte del modelo de dominio de la app y debe confirmarse con datos reales.
-
-## 6. Probar RLS con fixtures (instrucciones, no ejecutado aquí)
-
-La prueba debe ejecutarse en un proyecto de prueba o dentro de una transacción que se revierta. El SQL Editor conectado como propietario de la base puede saltarse RLS, por lo que hay que usar el rol `authenticated` y claims de prueba, o ejecutar el fixture desde el cliente Supabase con dos cuentas de prueba.
-
-Esquema recomendado:
-
-1. Crea dos usuarios de prueba en Auth: `owner`, `member`, y un tercero `outsider`; anota sus UUID.
-2. Ejecuta la migración.
-3. En una transacción de prueba configura claims, por ejemplo:
-
-   ```sql
-   begin;
-   set local role authenticated;
-   select set_config(
-     'request.jwt.claims',
-     '{"role":"authenticated","sub":"UUID_OWNER","email":"owner@example.test"}',
-     true
-   );
-   select public.create_household('Casa de prueba');
-   -- Guarda el UUID devuelto para las siguientes comprobaciones.
-   rollback;
-   ```
-
-4. Repite con `UUID_MEMBER` y `UUID_OUTSIDER` mediante sesiones reales de prueba. Comprueba que owner/member leen los registros del hogar, que outsider obtiene cero filas y que una escritura con otro `household_id` falla.
-5. Comprueba que un `insert` directo en `household_members` no puede elegir `role = 'owner'`, que cambiar `created_by` falla y que solo la RPC de creación produce el propietario.
-6. Comprueba el CAS: dos sesiones leen `revision = 1`; la primera guarda con `p_expected_revision = 1`; la segunda debe recibir `WELLO_REVISION_CONFLICT` con `p_expected_revision = 1`.
-7. Repite el mismo `p_operation_id` para verificar que no aumenta la revisión ni duplica el registro.
-8. Llama `record_purchase_and_inventory()` con un inventario válido y una compra que fuerce conflicto: ninguna de las dos filas debe quedar actualizada.
-9. Prueba una invitación con fecha pasada, token alterado, token consumido y revocación. Ninguno debe agregar una membresía.
-
-`supabase/tests/rls.sql` contiene una lista ejecutable de aserciones y marcadores para adaptar esos UUID a un entorno de prueba. No se declara que esas pruebas hayan corrido hasta observar resultados de una base Supabase real.
+Queda pendiente probar Google real, el retorno OAuth/URLs, aceptación con dos familiares reales, sincronización entre dispositivos y el iPhone físico. Esas comprobaciones requieren que la propietaria active Google y que ambas personas entren con sus propias cuentas.

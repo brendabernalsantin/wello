@@ -35,7 +35,7 @@ WELLO_SUPABASE_PUBLISHABLE_KEY=sb_publishable_TU_CLAVE_PUBLICA \
 npm run build:pages
 ```
 
-Producción rechaza configuración ausente y claves administrativas. Las rutas y assets son compatibles con `/primera-app/`. La guía [docs/DESPLIEGUE.md](docs/DESPLIEGUE.md) explica Google, Supabase y GitHub Pages. El workflow `.github/workflows/pages.yml` se ejecuta manualmente. No se ha cambiado ni publicado `brendabernalsantin/primera-app`.
+Producción rechaza configuración ausente y claves administrativas. `wello-public-config.json` contiene sólo la URL y clave publicable de Wello en Supabase; las variables anteriores pueden sustituirlas. El destino confirmado es `brendabernalsantin/wello`, con rutas compatibles con `/wello/`. La guía [docs/DESPLIEGUE.md](docs/DESPLIEGUE.md) explica la publicación por rama `gh-pages`. No hay workflow instalado; la plantilla opcional está en `docs/plantillas/pages-workflow.yml`. No se ha cambiado `brendabernalsantin/primera-app`.
 
 ## Estructura
 
@@ -43,7 +43,7 @@ Producción rechaza configuración ausente y claves administrativas. Las rutas y
 - `src/app.js`: navegación, Inicio, hogares, copias y diálogos.
 - `src/modules/`: Gym, Hábitos/mood, Mascotas, Alimentos y Calendario.
 - `src/plan.js`: plan público de entrenamiento con IDs estables.
-- `src/cloud.js` y `cloud-domain.js`: cliente Supabase oficial, PKCE, namespaces, NFC y sincronización manual por revisiones.
+- `src/cloud.js`, `cloud-domain.js` y `cloud-sync.js`: Supabase oficial, PKCE, namespaces, invitaciones, autosync por revisiones CAS y fusión de tres vías.
 - `assets/`: recursos locales aportados y recortes de referencia.
 - `scripts/`: build, servidor y comprobación de sintaxis.
 - `tests/`: dominio y flujos de interfaz automatizados.
@@ -59,15 +59,17 @@ Las copias `forma-gym-v1` y `forma-home-v1` tienen un adaptador estructural y mi
 
 El JSON privado de cargas verificadas se entrega fuera del repositorio. Importarlo exige elegirlo y revisar observaciones. No distribuyas ese JSON ni tus respaldos junto a los assets de Pages.
 
-## Colaboración: fase preparada, no desplegada
+## Colaboración familiar
 
-[docs/SUPABASE.md](docs/SUPABASE.md) detalla la propuesta propietario/miembro, invitaciones expirables de un uso, pertenencia validada en SQL y guardado CAS. La interfaz local no es un hogar compartido. La capa online incluye funciones y RPCs, pero la configuración de roles, la gestión completa de membresías y la colaboración entre dispositivos requieren revisión, configuración y pruebas reales. No se configura eliminación de cuenta ni fusión destructiva.
+El proyecto Supabase Wello está creado y el esquema real aplicado. Se implementaron UI de hogares compartidos, owner/member, enlaces ligados al correo de 7 días y un uso, revocación/retiro/salida y sincronización automática con CAS y fusión de cambios distintos. [docs/SUPABASE.md](docs/SUPABASE.md) documenta las **45 comprobaciones ejecutadas en la base real** con rollback y los permisos aplicados. La interfaz local no se convierte en compartida por abrir el HTML: requiere cuenta y confirmación de compartir un hogar.
+
+Google debe activarse desde la cuenta de la propietaria siguiendo [docs/ACTIVAR-GOOGLE.md](docs/ACTIVAR-GOOGLE.md). Pages se publica por rama con un ajuste manual de GitHub. Hasta validar Google y dos cuentas reales, no se declara que la familia esté conectada. No se implementa eliminación de cuenta ni transferencia de propiedad del hogar.
 
 ## Pruebas y límites
 
 `npm test` comprueba lógica y casos simulados; `npm run check` revisa sintaxis. `npm run test:ui` requiere Chrome/Chromium y Playwright; la ruta del ejecutable usada aquí es `/usr/bin/chromium`. Las pruebas abren el HTML por `file://`, verifican persistencia y recarga sin red y comprueban los anchos solicitados. El resultado final se registra en [docs/VALIDACION.md](docs/VALIDACION.md).
 
-No se ha probado un iPhone físico, Google real, una publicación Pages, RLS en una base Supabase real ni sincronización entre teléfonos. La búsqueda real Overpass respondió HTTP 406 desde este entorno; se validaron las respuestas simuladas y la alternativa manual.
+Se verificaron RLS, RPC, CAS e invitaciones en una base Supabase real con fixtures temporales. Quedan pendientes Google real, publicación HTTP de Pages y dos cuentas/dispositivos familiares; no se ha probado un iPhone físico. La búsqueda real Overpass respondió HTTP 406 desde este entorno; se validaron las respuestas simuladas y la alternativa manual.
 
 ## Recursos
 

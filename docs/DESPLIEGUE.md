@@ -1,104 +1,51 @@
-# Despliegue de Wello
+# Despliegue de Wello en GitHub Pages + Supabase
 
-Esta guía separa el HTML local, la preview y la variante online. En el estado actual no hay un proyecto Supabase ni una publicación verificada: la configuración externa y las credenciales las debe completar la persona propietaria de esas cuentas.
+El repositorio es https://github.com/brendabernalsantin/wello . Su código se hizo público con autorización explícita de la propietaria para poder utilizar Pages sin contratar un plan. Los registros personales y familiares no se suben al repositorio. La base real y sus pruebas están descritas en [SUPABASE.md](SUPABASE.md).
 
-## Antes de empezar
+## Para la propietaria: ajustes desde tu navegador
 
-Requisitos del repositorio: Node 20 o compatible con el lockfile, npm y una cuenta de GitHub para Pages. La dependencia online es el SDK oficial `@supabase/supabase-js`; queda en el bundle cloud separado y no se carga al abrir `entregables/Wello.html` desde disco.
+Después de que la compilación final se haya enviado a la rama `gh-pages`, abre https://github.com/brendabernalsantin/wello/settings/pages y elige **Source → Deploy from a branch**, **Branch → gh-pages**, **Folder → / (root)**. Pulsa **Save**. No elijas `main` ni `docs`; el código fuente y la documentación no son la salida de publicación.
 
-No pongas secretos en el frontend. `WELLO_SUPABASE_URL` y `WELLO_SUPABASE_PUBLISHABLE_KEY` son valores públicos de build. El Client Secret de Google, `service_role`, `sb_secret_...`, contraseñas y tokens administrativos solo viven en Supabase o en el proveedor de secretos correspondiente.
+La dirección prevista es `https://brendabernalsantin.github.io/wello/`. Se considera publicada sólo cuando GitHub termine el despliegue y esa dirección sirva la compilación correcta con HTTP200. No se considera publicada por tener una rama o un commit.
 
-## Comprobación local
+Activa Google siguiendo [ACTIVAR-GOOGLE.md](ACTIVAR-GOOGLE.md). El callback de Google es `https://hpdefigzmgvqvgylvydh.supabase.co/auth/v1/callback`; Site URL y Redirect URL de Supabase son `https://brendabernalsantin.github.io/wello/`. No envíes Client Secret por chat ni lo subas al código.
 
-Desde la raíz del repositorio:
+## Desarrollo y validación
+
+Con Node20 o compatible con el lockfile:
 
 ```bash
 npm ci
-npm test
 npm run check
+npm test
 npm run export:html
 npm start
 ```
 
-Para revisar la variante estática de Pages antes de publicar:
+`entregables/Wello.html` es autocontenido y local, sin SDK de Supabase ni necesidad de cuenta. La variante online se compila por separado:
 
 ```bash
-npm run preview:pages
-```
-
-El flujo local debe funcionar sin cuenta y sin red. La entrada **Continuar en modo local** es explícita. La variante local no importa `src/cloud.js`, no crea un cliente Supabase y no simula una sesión de Google. Las simulaciones de autenticación, si se agregan a una prueba, deben llamarse con una función opt-in de test; no son una autenticación real.
-
-## Preparar Supabase y Google
-
-Sigue [`docs/SUPABASE.md`](SUPABASE.md): crea el proyecto Wello, aplica `supabase/migrations/001_wello.sql`, configura Google y agrega como callback de Google:
-
-```text
-https://TU-PROJECT-REF.supabase.co/auth/v1/callback
-```
-
-En Supabase Auth agrega como Site URL y Redirect URL la base publicada, por ejemplo:
-
-```text
-https://TU_USUARIO.github.io/primera-app/
-```
-
-El cliente usa OAuth PKCE, vuelve a esa base relativa, conserva `#super?accion=agregar` durante el retorno y consume el destino una sola vez. La URL NFC completa debe ser HTTPS:
-
-```text
-https://TU_USUARIO.github.io/primera-app/#super?accion=agregar
-```
-
-La web abre el formulario de **Agregar al súper**; no escribe una compra sin intervención y no necesita Web NFC.
-
-## Build de Pages con configuración pública
-
-Para una compilación local de producción, proporciona variables sin subir el archivo:
-
-```bash
-WELLO_SUPABASE_URL='https://TU-PROJECT-REF.supabase.co' \
-WELLO_SUPABASE_PUBLISHABLE_KEY='sb_publishable_TU_CLAVE_PUBLICA' \
-WELLO_DEPLOY_MODE=production \
 npm run build:pages
 ```
 
-La compilación de `production` debe rechazar configuración ausente, HTTP y claves privilegiadas. `preview` puede usar una URL HTTP local para desarrollo; el sitio publicado debe usar HTTPS. Confirma en el HTML generado que solo exista `window.WELLO_CONFIG={url,key,mode}` y que no haya Client Secret, `service_role` ni `sb_secret_`.
+La configuración publicable real se toma de `wello-public-config.json`; se pueden sustituir URL/clave mediante `WELLO_SUPABASE_URL` y `WELLO_SUPABASE_PUBLISHABLE_KEY`. Son valores públicos. La compilación rechaza HTTP en producción, claves administrativas y JWTs que no sean anon. `npm run build:preview` sirve para una variante online explícitamente sin servicios configurados.
 
-## Publicación manual con GitHub Actions
+## Enviar el artefacto a Pages
 
-El workflow [`.github/workflows/pages.yml`](../.github/workflows/pages.yml) solo se ejecuta con **Run workflow**. Antes de ejecutarlo:
-
-1. En el repositorio habilita Pages con **GitHub Actions** como fuente.
-2. En **Settings → Secrets and variables → Actions → Variables** crea `WELLO_SUPABASE_URL` y `WELLO_SUPABASE_PUBLISHABLE_KEY`. Son configuración pública; no uses aquí una clave administrativa.
-3. Confirma que el repositorio sea realmente el que publicará bajo `/primera-app/`, o ajusta el nombre del repositorio y las Redirect URLs en Supabase antes de publicar.
-4. Ejecuta manualmente la acción. Esta correrá, en orden, `npm ci`, `npm test`, `npm run check`, `npm run build:pages`, preparará `dist/` y publicará Pages.
-
-La acción no configura Google, no aplica migraciones y no puede crear credenciales externas. Si las variables no existen, la compilación de producción debe fallar en vez de generar una pantalla que parezca conectada.
-
-## Revisión después del build
-
-En el sitio publicado verifica de forma manual:
-
-- la app local conserva su funcionamiento sin sesión;
-- en línea aparece el banner de estado claro;
-- con configuración ausente el botón Google está deshabilitado y existe la entrada de modo local;
-- Google vuelve a `/primera-app/` y elimina los parámetros OAuth;
-- cerrar sesión muestra login y no el cache de la cuenta anterior;
-- una cuenta no puede leer un hogar cuyo UUID conoce pero donde no es miembro;
-- **Sincronizar ahora** es manual, y un conflicto conserva el estado local para revisión;
-- la URL NFC abre el formulario una sola vez.
-
-No se ha probado aquí acceso Google real, sincronización entre dos teléfonos, RLS contra una base Supabase, una publicación de Pages ni un iPhone físico. Esas validaciones requieren las cuentas, las variables y los dispositivos de la persona propietaria.
-
-## Comandos de producción que requieren credenciales/configuración
+Después de guardar y verificar el código en main, ejecutar con autorización de publicación:
 
 ```bash
-npm ci
-npm test
-npm run check
-WELLO_SUPABASE_URL='https://TU-PROJECT-REF.supabase.co' \
-WELLO_SUPABASE_PUBLISHABLE_KEY='sb_publishable_TU_CLAVE_PUBLICA' \
-WELLO_DEPLOY_MODE=production \
-npm run build:pages
+node scripts/publish-pages.mjs --repo=brendabernalsantin/wello
 ```
 
-La ejecución de esos comandos aquí no implica que el proyecto esté publicado. La acción de Pages y la configuración de Supabase se deben confirmar en sus respectivas cuentas.
+Ese script valida el destino origin, compila y envía únicamente `index.html`, `manus-routes.json` y `.nojekyll` a `gh-pages` sin force-push. Mantiene como padre la versión previa de esa rama y preserva otros archivos existentes. No cambia privacidad, plan ni ajustes de Pages. No publica respaldos, localStorage o fixtures.
+
+Las actualizaciones futuras requieren repetir el build/push del artefacto. No hay un workflow automático instalado: se conserva una plantilla opcional en `docs/plantillas/pages-workflow.yml`, fuera de `.github/workflows`. No es necesario configurar variables de Actions para el método por rama. Tampoco se activa publicación de Manus al guardar el código.
+
+## Verificación tras publicar
+
+Comprobar el HTTP200 y que la configuración embebida apunte a la ref real de Supabase en modo production. Un usuario sin sesión no obtiene datos privados. Con Google real, revisar retorno a `/wello/`, cerrar sesión/cambiar cuenta, crear y compartir un hogar, invitar otra cuenta y comprobar una edición del súper desde ambos dispositivos. Los datos personales de cada cuenta no deben aparecer al otro miembro.
+
+NFC usa `https://brendabernalsantin.github.io/wello/#super?accion=agregar`: abre un formulario, no registra una compra automáticamente. El destino de NFC o invitación se conserva a través de OAuth. El hardware NFC y Calendario Apple requieren prueba física separada.
+
+Hasta activar Google y verificar dos cuentas reales, el código y los permisos probados no se presentan como una familia ya conectada.

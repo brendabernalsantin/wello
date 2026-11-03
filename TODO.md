@@ -185,3 +185,16 @@ Cada fila es una entrada independiente dentro de su rutina, aunque el nombre apa
 - [x] Exportación al iPhone: seleccionar filtro dentro del diálogo (sólo mascotas, sólo hábitos, Gym, citas o todas), mes y moods/notas opcionales; ICS debe contener sólo la selección.
 - [x] Frecuencia de hábito: días marcados sólo para días de la semana; intervalo sólo para cada N días; mensual abre calendario real para seleccionar día, guarda recurrencia y muestra la próxima fecha automáticamente (ejemplo 3 de diciembre).
 - [x] Hábitos compactos: listar icono/nombre y check; el detalle y la edición se despliegan al presionar el hábito; no tarjetas grandes por hábito. Cantidades/semana conservadas en detalle y check cuantitativo sin inventar cantidades.
+
+## Producción familiar aprobada
+- [x] Repositorio brendabernalsantin/wello creado y conectado, público por autorización explícita para Pages gratuito, sin datos personales. Workflow conservado como plantilla fuera de GitHub Actions.
+- [x] Supabase Wello gratuito en organización confirmada; tablas y RPC/RLS verificadas en rollback real. Privado sólo dueño de cuenta; hogar sólo miembros; visitante/no miembro denegado; escritura directa blobs denegada, CAS e idempotencia bajo bloqueo.
+- [ ] Hogares por membresía con crear/compartir local explícito, cambiar hogar; owner renombra, invita correo-confirmado con enlace7d uso único, revoca y retira; member sale sin permiso administrativo. No transferir propietario ni borrar hogar.
+- [ ] Sync automática edición/retorno/15s visible, indicador pendiente/error/conflicto y retry offline. Fusión disjunta sin perder compras ni revivir borrados; mismo valor conflicto exige decisión y respaldo. Namespace/logout/generation protege contra cuenta vieja.
+- [ ] Fotos/celo/prácticas/mascotas/hábitos del hogar/inventario/súper/compras compartidos, Gym/mood/citas/hábitos personales privados. Local import explícito y no subir hogares automáticamente.
+- [ ] Clave publicable y URL real, Google Auth y callback/retorno Pages exacto, publicación estática por rama sin divulgar código privado sin permiso ni pagar extras.
+- [ ] Revisión independiente y pruebas afectadas; Supabase y Pages reales, Google y dos familiares verificados sólo con acceso real; límites pendientes documentados.
+
+### Evidencia de esta fase
+
+92 pruebas JavaScript correctas y sintaxis verificada después de los parches de cuenta, bootstrap, baseline, revocación, reintento de creación y nombres canónicos. Fixture real Supabase: 45 aserciones con rollback; invitaciones limitadas a siete días en SQL. Backend e interfaz implementados; Google real, Pages HTTP y dos familiares siguen pendientes.

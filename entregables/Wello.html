@@ -579,6 +579,10 @@
   .pet-photo-controls .btn{font-size:10px}
   .pet-trick-row .row{width:100%;justify-content:flex-start}
 }
+
+.households-heading{align-items:flex-start}.households-heading h1{margin-top:2px}.households-local-note{margin-top:0}.households-local-section,.households-cloud-section{margin-top:26px}.households-grid{align-items:stretch}.household-card{display:flex;flex-direction:column;gap:0;min-width:0}.household-card h2{margin:15px 0 8px;overflow-wrap:anywhere}.household-card p{font-size:12px;line-height:1.65}.household-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}.household-mark{flex-shrink:0}.household-local-label,.household-shared-label{max-width:100%;overflow:hidden;text-overflow:ellipsis}.household-shared-mark{background:#E8E4FA;color:#614390}.household-role-owner{background:#DEF4EE;color:#24664E}.household-role-member{background:#DDF1FA;color:#1E5A70}.household-role-unknown{background:#F2F4F5;color:#586570}.household-actions{margin-top:auto;padding-top:20px;align-items:center}.household-actions .btn{max-width:100%}.households-cloud-section{border-top:1px solid #E5EBE9;padding-top:2px}.households-cloud-section>.section-head{margin-bottom:16px}.household-offline-card{background:#F5FBF8;border:1px solid #DCEDE5;border-radius:24px;padding:24px}.household-offline-card .section-head{margin-top:0}.household-loading{color:#3D6658}.household-empty{margin-bottom:0}.household-privacy-card{margin-top:24px}.household-invite-banner{display:flex;align-items:center;gap:15px;background:#FFF6D9;border:1px solid #F0D986;border-radius:20px;padding:18px 20px;margin:0 0 22px;min-width:0}.household-invite-banner>div{flex:1;min-width:0}.household-invite-banner h2{font-size:18px;margin-bottom:4px}.household-invite-banner p{font-size:12px;line-height:1.6}.household-invite-icon{height:45px;width:45px;border-radius:15px;background:#FFE8A1;color:#6B5017;display:flex;align-items:center;justify-content:center;flex-shrink:0}.household-confirm-copy p{margin-bottom:14px}.household-member-row,.household-invite-row{align-items:center;gap:10px}.household-member-row>span,.household-invite-row>span{min-width:0;overflow-wrap:anywhere}.household-member-actions{margin-top:18px}.household-inline-empty{padding:24px;margin:0}.household-token-field input{font-size:11px;letter-spacing:.01em}.household-token-field{overflow-wrap:anywhere}.household-token-field input{min-width:0}.household-cloud-section .section-head .row{justify-content:flex-end}.household-cloud-section .section-head .small{max-width:240px;text-align:right}.households-heading+.household-invite-banner{margin-top:-5px}
+@media(max-width:600px){.households-local-section,.households-cloud-section{margin-top:22px}.household-card-head{align-items:flex-start}.household-card-head .pill{white-space:normal;text-align:right;line-height:1.35}.household-actions{align-items:stretch}.household-actions .btn:not(.icon-button){flex:1 1 145px}.household-actions .icon-button{flex:0 0 40px}.household-invite-banner{align-items:flex-start;flex-wrap:wrap;padding:17px}.household-invite-banner>div{flex-basis:calc(100% - 60px)}.household-invite-banner>.btn{width:calc(100% - 60px);margin-left:60px}.household-cloud-section .section-head{align-items:flex-start;flex-wrap:wrap}.household-cloud-section .section-head .row{width:100%;justify-content:space-between}.household-cloud-section .section-head .small{max-width:none;text-align:left}.household-card p{font-size:11px}.household-token-field input{font-size:10px}.household-member-row .btn,.household-invite-row .btn{min-height:42px;padding:9px 11px;font-size:11px}}
+@media(max-width:350px){.household-card-head{gap:6px}.household-card-head .pill{font-size:9px;padding:5px 7px}.household-invite-banner>div{flex-basis:calc(100% - 54px)}.household-invite-banner>.btn{width:calc(100% - 54px);margin-left:54px}.household-invite-banner h2{font-size:17px}.household-invite-banner p{font-size:11px}.household-actions .btn{font-size:10px;padding-left:10px;padding-right:10px}}
 </style>
 </head>
 <body data-page="inicio">
@@ -26444,6 +26448,451 @@
     });
   }
 
+  // src/modules/households.js
+  var INVITE_HASH_RE = /^#?invitacion\?token=([0-9a-f]{64})$/i;
+  function cloud() {
+    return globalThis.window?.WelloCloud || globalThis.WelloCloud || null;
+  }
+  function viewFor2(ctx2) {
+    if (!ctx2.view || typeof ctx2.view !== "object") ctx2.view = {};
+    return ctx2.view;
+  }
+  function isPromise(value) {
+    return Boolean(value && typeof value.then === "function");
+  }
+  function cloudAuthenticated(api) {
+    if (!api) return false;
+    try {
+      if (typeof api.isAuthenticated === "function") {
+        const result = api.isAuthenticated();
+        return !isPromise(result) && Boolean(result);
+      }
+      if (typeof api.auth === "function") {
+        const result = api.auth();
+        return !isPromise(result) && Boolean(result);
+      }
+      if (typeof api.auth === "boolean") return api.auth;
+      if (api.auth && typeof api.auth === "object") return api.auth.status === "signed_in" || api.auth.authenticated === true;
+      const state2 = typeof api.getState === "function" ? api.getState() : api.state;
+      return Boolean(state2?.authenticated || state2?.status === "signed_in" || state2?.status === "authenticated");
+    } catch {
+      return false;
+    }
+  }
+  function cloudEmail(api) {
+    try {
+      const state2 = typeof api?.getState === "function" ? api.getState() : api?.state;
+      return String(state2?.email || state2?.user?.email || api?.email || "").trim();
+    } catch {
+      return "";
+    }
+  }
+  function cleanError(error) {
+    const message = String(error?.message || error || "No se pudo completar la acci\xF3n.");
+    return message.replace(/[0-9a-f]{64}/gi, "el token de invitaci\xF3n");
+  }
+  function showError(ctx2, error) {
+    ctx2.toast?.(cleanError(error));
+  }
+  function normaliseList(value, key) {
+    if (Array.isArray(value)) return value;
+    if (Array.isArray(value?.[key])) return value[key];
+    if (Array.isArray(value?.data)) return value.data;
+    return [];
+  }
+  function inviteTokenFromHash(hash = globalThis.location?.hash || "") {
+    const match = INVITE_HASH_RE.exec(String(hash));
+    return match ? match[1].toLowerCase() : "";
+  }
+  function tokenFromDestination(value) {
+    if (typeof value === "string") return inviteTokenFromHash(value) || (/^[0-9a-f]{64}$/i.test(value) ? value.toLowerCase() : "");
+    return inviteTokenFromHash(value?.hash || "") || tokenFromDestination(value?.token || "");
+  }
+  function pendingInviteToken(ctx2) {
+    const view3 = viewFor2(ctx2);
+    const current = inviteTokenFromHash(globalThis.location?.hash || "");
+    if (current) {
+      view3.pendingInviteToken = current;
+      try {
+        globalThis.sessionStorage?.setItem("wello:invite-pending", current);
+      } catch {
+      }
+    }
+    if (!view3.pendingInviteToken) {
+      try {
+        view3.pendingInviteToken = tokenFromDestination(globalThis.sessionStorage?.getItem("wello:invite-pending") || "");
+      } catch {
+      }
+    }
+    if (!view3.pendingInviteToken) {
+      try {
+        view3.pendingInviteToken = tokenFromDestination(cloud()?.inviteDestinationFromHash?.());
+      } catch {
+      }
+    }
+    return view3.pendingInviteToken || "";
+  }
+  function roleName(role) {
+    return String(role || "").toLowerCase() === "owner" ? "owner" : String(role || "").toLowerCase() === "member" ? "member" : "";
+  }
+  function homeFromResult(result) {
+    const home = result?.household || result?.home || result?.shared || result;
+    if (!home || typeof home !== "object") return null;
+    const id = String(home.id || home.household_id || home.homeUuid || home.uuid || "").trim();
+    if (!id) return null;
+    return { id, name: String(home.name || "Hogar compartido"), role: roleName(home.role) || "owner", localId: home.localId || home.local_id || "" };
+  }
+  function inviteExpiry(value, ctx2) {
+    if (!value) return "V\xE1lido durante 7 d\xEDas";
+    const date = String(value).slice(0, 10);
+    return date ? `V\xE1lido durante 7 d\xEDas (hasta ${ctx2.prettyDate?.(date) || date})` : "V\xE1lido durante 7 d\xEDas";
+  }
+  function setBusy(form, busy) {
+    const button3 = form?.querySelector?.('button[type="submit"]');
+    if (!button3) return { button: null, alreadyBusy: false };
+    const alreadyBusy = button3.dataset.householdBusy === "true";
+    if (busy) {
+      if (!alreadyBusy) {
+        button3.dataset.householdBusy = "true";
+        button3.disabled = true;
+        button3.setAttribute("aria-busy", "true");
+      }
+    } else {
+      button3.dataset.householdBusy = "";
+      button3.disabled = false;
+      button3.removeAttribute("aria-busy");
+    }
+    return { button: button3, alreadyBusy };
+  }
+  async function runForm(form, operation) {
+    const state2 = setBusy(form, true);
+    if (state2.alreadyBusy) return false;
+    try {
+      return await operation();
+    } finally {
+      setBusy(form, false);
+    }
+  }
+  function actionButton(ctx2, label, action, extra = "", kind = "secondary") {
+    return ctx2.btn ? ctx2.btn(label, action, extra, kind) : `<button type="button" class="btn ${kind}" data-action="${ctx2.esc(action)}" ${extra}>${label}</button>`;
+  }
+  function localCard(ctx2, home, view3, authenticated) {
+    const mapped = view3.cloudHomes?.find((item) => item.localId && item.localId === home.id);
+    const shared = mapped || ((view3.publishedLocalIds || []).includes(home.id) ? { id: home.id } : null);
+    const publish = authenticated && !shared ? actionButton(ctx2, "Compartir este hogar", "household-publish", `data-local-id="${ctx2.esc(home.id)}"`, "primary") : shared ? '<span class="pill household-shared-label">Compartido en la nube</span>' : "";
+    return `<article class="panel household-card household-local-card"><div class="household-card-head"><span class="household-mark">${ctx2.icon?.("house", 30) || ""}</span><span class="pill household-local-label">Solo en este dispositivo</span></div><h2>${ctx2.esc(home.name)}</h2><p class="muted">Mascotas, alimentos y h\xE1bitos de este hogar. Tus Gym, mood, citas y h\xE1bitos personales siguen fuera de este espacio.</p><div class="row wrap household-actions">${actionButton(ctx2, home.id === ctx2.state().activeHousehold ? "Hogar activo" : "Cambiar a este hogar", "home-switch", `data-id="${ctx2.esc(home.id)}"`, "secondary")}${actionButton(ctx2, ctx2.icon?.("pencil", 17) || "Renombrar", "home-rename", `data-id="${ctx2.esc(home.id)}" aria-label="Cambiar nombre"`, "icon-button")}${publish}</div></article>`;
+  }
+  function sharedCard(ctx2, item) {
+    const role = roleName(item.role);
+    const owner = role === "owner";
+    const member = role === "member";
+    const controls = owner ? `${actionButton(ctx2, "Miembros e invitaciones", "household-members", `data-household-id="${ctx2.esc(item.id)}"`, "secondary")}${actionButton(ctx2, ctx2.icon?.("pencil", 17) || "Renombrar", "household-shared-rename", `data-household-id="${ctx2.esc(item.id)}" aria-label="Renombrar hogar compartido"`, "icon-button")}` : member ? actionButton(ctx2, "Salir del hogar", "household-leave", `data-household-id="${ctx2.esc(item.id)}"`, "danger") : "";
+    return `<article class="panel household-card household-shared-card"><div class="household-card-head"><span class="household-mark household-shared-mark">${ctx2.icon?.("users", 30) || ""}</span><span class="pill household-role household-role-${ctx2.esc(role || "unknown")}">${role === "owner" ? "Propietaria" : role === "member" ? "Miembro" : "Membres\xEDa en revisi\xF3n"}</span></div><h2>${ctx2.esc(item.name || "Hogar compartido")}</h2><p class="muted">Hogar compartido por membres\xEDa. Solo sus registros familiares se sincronizan en este espacio.</p><div class="row wrap household-actions">${actionButton(ctx2, (item.localId || item.id) === ctx2.state().activeHousehold ? "Hogar activo" : "Elegir este hogar", "home-switch", `data-id="${ctx2.esc(item.localId || item.id)}"`, "primary")}${controls}</div></article>`;
+  }
+  function inviteBanner(ctx2, authenticated) {
+    const token = pendingInviteToken(ctx2);
+    if (!token) return "";
+    const api = cloud();
+    if (!authenticated) {
+      return `<section class="household-invite-banner household-invite-pending"><span class="household-invite-icon">${ctx2.icon?.("mail-plus", 24) || ""}</span><div><h2>Tienes una invitaci\xF3n pendiente</h2><p>Contin\xFAa con Google en Cuenta en l\xEDnea. Antes de aceptar ver\xE1s el correo de la cuenta que quedar\xE1 ligado al hogar.</p></div>${actionButton(ctx2, "Abrir Cuenta en l\xEDnea", "household-invite-auth", "", "primary")}</section>`;
+    }
+    const email = cloudEmail(api);
+    return `<section class="household-invite-banner household-invite-pending"><span class="household-invite-icon">${ctx2.icon?.("mail-plus", 24) || ""}</span><div><h2>Revisa tu invitaci\xF3n</h2><p>Se aceptar\xE1 con la cuenta <strong>${ctx2.esc(email || "autenticada en Google")}</strong>. No se acepta autom\xE1ticamente.</p></div>${actionButton(ctx2, "Revisar y aceptar", "household-accept-invite", "", "primary")}</section>`;
+  }
+  function renderHouseholds(ctx2) {
+    const state2 = ctx2.state();
+    const view3 = viewFor2(ctx2);
+    const api = cloud();
+    const authenticated = cloudAuthenticated(api);
+    const shared = authenticated && Array.isArray(view3.cloudHomes) ? view3.cloudHomes : [];
+    const status = authenticated ? view3.cloudLoading ? '<span class="small muted">Actualizando membres\xEDas\u2026</span>' : '<span class="small muted">La cuenta en l\xEDnea est\xE1 separada de tus hogares locales.</span>' : '<span class="small muted">Modo local: nada se publica sin una acci\xF3n expl\xEDcita.</span>';
+    const sharedSection = authenticated ? `<section class="households-cloud-section"><div class="section-head"><div><span class="eyebrow">CUENTA EN L\xCDNEA</span><h2>Hogares compartidos</h2></div><div class="row wrap">${status}${actionButton(ctx2, ctx2.icon?.("refresh-cw", 16) || "Actualizar", "household-cloud-refresh", 'aria-label="Actualizar hogares compartidos"', "ghost")}</div></div>${view3.cloudLoading ? '<div class="soft household-loading">Revisando tus membres\xEDas\u2026</div>' : shared.length ? `<div class="grid-two households-grid">${shared.map((item) => sharedCard(ctx2, item)).join("")}</div>` : '<div class="empty household-empty"><span class="empty-icon">' + (ctx2.icon?.("users", 30) || "") + "</span><h3>A\xFAn no tienes hogares compartidos</h3><p>Publica un hogar local de forma expl\xEDcita o acepta una invitaci\xF3n. Tus datos personales nunca forman parte de la publicaci\xF3n.</p></div>"}</section>` : `<section class="households-cloud-section household-offline-card"><div class="section-head"><div><span class="eyebrow">CUENTA EN L\xCDNEA</span><h2>Comparte cuando t\xFA decidas</h2></div></div><p class="muted">Puedes seguir en modo local. Iniciar sesi\xF3n no publica mascotas, alimentos ni h\xE1bitos autom\xE1ticamente; el hogar que elijas se revisa antes de compartirlo.</p></section>`;
+    const sharedLocalIds = new Set(shared.flatMap((item) => [item.id, item.localId].filter(Boolean)));
+    const localHomes = (Array.isArray(state2.households) ? state2.households : []).filter((home) => !sharedLocalIds.has(home.id));
+    return `<div class="page-heading households-heading"><div><span class="eyebrow">LO QUE COMPARTIMOS</span><h1>Mis hogares</h1><p>Un lugar para cuidar lo cotidiano, en tu dispositivo o con personas invitadas.</p></div>${actionButton(ctx2, "Crear hogar", "home-new", "", "primary")}</div>${inviteBanner(ctx2, authenticated)}<div class="note households-local-note">${ctx2.icon?.("monitor", 22) || ""}<span>Los hogares locales se guardan en este dispositivo. Gym, mood, citas y h\xE1bitos \xABPara m\xED\xBB son personales y no se publican al compartir un hogar.</span></div><section class="households-local-section"><div class="section-head"><div><span class="eyebrow">ESPACIOS LOCALES</span><h2>Tus hogares en este dispositivo</h2></div><span class="small muted">${localHomes.length} ${localHomes.length === 1 ? "hogar" : "hogares"}</span></div><div class="grid-two households-grid">${localHomes.map((home) => localCard(ctx2, home, view3, authenticated)).join("")}</div></section>${sharedSection}<section class="panel household-privacy-card"><h2>Lo tuyo sigue contigo</h2><p class="muted">Gym, tu mood, tus citas personales y los h\xE1bitos \xABPara m\xED\xBB no cambian al elegir otro hogar. Cada hogar conserva sus propias mascotas, alimentos, s\xFAper, compras y h\xE1bitos familiares.</p></section></div>`;
+  }
+  async function accountAction(api, operation) {
+    const tag = accountTag(api);
+    const result = await operation();
+    if (cloud() !== api || !cloudAuthenticated(api) || accountTag(api) !== tag || result?.status === "stale") {
+      throw new Error("Cambi\xF3 la sesi\xF3n. Revisa la cuenta antes de reintentar.");
+    }
+    return result;
+  }
+  function accountTag(api) {
+    const state2 = api?.getState?.() || {};
+    return String(state2.user?.id || state2.email || state2.user?.email || "") + ":" + String(globalThis.window?.WelloApp?.getNamespace?.() || "");
+  }
+  async function refreshHouseholds(ctx2, { silent = false, useCloudRefresh = true } = {}) {
+    const api = cloud();
+    const view3 = viewFor2(ctx2);
+    const accountAtStart = accountTag(api);
+    const stillCurrent = () => api === cloud() && cloudAuthenticated(api) && accountTag(api) === accountAtStart;
+    if (!api || !cloudAuthenticated(api) || typeof api.listHouseholds !== "function") {
+      view3.cloudHomes = [];
+      view3.cloudLoading = false;
+      return [];
+    }
+    if (view3.cloudRequest) return view3.cloudRequest;
+    view3.cloudLoading = true;
+    if (!silent) ctx2.render?.();
+    view3.cloudRequest = (async () => {
+      try {
+        if (useCloudRefresh && typeof api.refresh === "function") await api.refresh();
+        const result = await api.listHouseholds();
+        const list = (await Promise.all(normaliseList(result, "households").map(async (item) => {
+          const id = String(item.id || item.household_id || item.uuid || "").trim();
+          if (!id) return null;
+          let role = roleName(item.role);
+          if (!role && typeof api.getRole === "function") {
+            try {
+              role = roleName(await api.getRole(id));
+            } catch {
+              role = "";
+            }
+          }
+          return { id, name: String(item.name || "Hogar compartido"), role, localId: String(item.localId || item.local_id || "").trim() };
+        }))).filter(Boolean);
+        if (!stillCurrent()) return [];
+        view3.cloudHomes = list;
+        view3.cloudLoadedAt = Date.now();
+        return list;
+      } catch (error) {
+        if (!silent && stillCurrent()) showError(ctx2, error);
+        return null;
+      } finally {
+        if (stillCurrent()) {
+          view3.cloudLoading = false;
+          view3.cloudRequest = null;
+          if (!silent) ctx2.render?.();
+        }
+      }
+    })();
+    return view3.cloudRequest;
+  }
+  async function getRole(api, id, fallback = "") {
+    if (fallback) return roleName(fallback);
+    if (typeof api?.getRole !== "function") return "";
+    return roleName(await api.getRole(id));
+  }
+  async function publishLocal(ctx2, localId) {
+    const api = cloud();
+    if (!api || !cloudAuthenticated(api) || typeof api.createShared !== "function") {
+      ctx2.toast?.("Inicia sesi\xF3n para compartir un hogar.");
+      return;
+    }
+    const home = ctx2.state().households?.find((item) => item.id === localId);
+    if (!home) return;
+    ctx2.modal("Compartir este hogar", `<div class="household-confirm-copy"><p>Se compartir\xE1 <strong>${ctx2.esc(home.name)}</strong> como un hogar familiar. Incluye sus mascotas, h\xE1bitos del hogar, inventario, lista del s\xFAper, compras y tiendas.</p><p><strong>No incluye</strong> Gym, mood, citas ni h\xE1bitos marcados \xABPara m\xED\xBB. El hogar no se publica hasta que confirmes.</p></div>`, async (_values, form) => runForm(form, async () => {
+      const result = await accountAction(api, () => api.createShared(home.name, { localId: home.id }));
+      const created = homeFromResult(result);
+      const view3 = viewFor2(ctx2);
+      if (created) {
+        view3.cloudHomes = [...(view3.cloudHomes || []).filter((item) => item.id !== created.id), { ...created, localId: home.id }];
+        view3.publishedLocalIds = [.../* @__PURE__ */ new Set([...view3.publishedLocalIds || [], home.id])];
+      }
+      ctx2.render?.();
+      ctx2.toast?.("Hogar compartido.");
+      if (created) {
+        ctx2.modal("Hogar compartido", `<p><strong>${ctx2.esc(created.name)}</strong> ya est\xE1 listo. Ahora puedes invitar a una persona por un enlace de 7 d\xEDas; Wello no env\xEDa correos autom\xE1ticamente.</p><div class="row wrap">${actionButton(ctx2, "Invitar a alguien", "household-invite", `data-household-id="${ctx2.esc(created.id)}"`, "primary")}${actionButton(ctx2, "Administrar miembros", "household-members", `data-household-id="${ctx2.esc(created.id)}"`, "secondary")}</div>`);
+      }
+    }), "Compartir hogar");
+  }
+  async function renameShared(ctx2, householdId) {
+    const api = cloud();
+    const rename = api?.renameHousehold || api?.rename;
+    if (!api || typeof rename !== "function") return;
+    const view3 = viewFor2(ctx2);
+    const item = view3.cloudHomes?.find((home) => home.id === householdId);
+    const role = await getRole(api, householdId, item?.role);
+    if (role !== "owner") {
+      ctx2.toast?.("Solo la propietaria puede renombrar este hogar.");
+      return;
+    }
+    ctx2.modal("Renombrar hogar compartido", ctx2.field("Nombre", "name", item?.name || "", "text", 'required maxlength="80"'), async (values, form) => runForm(form, async () => {
+      const name = String(values.name || "").trim();
+      if (!name) return false;
+      await accountAction(api, () => rename.call(api, householdId, name));
+      view3.cloudHomes = (view3.cloudHomes || []).map((home) => home.id === householdId ? { ...home, name } : home);
+      ctx2.render?.();
+      ctx2.toast?.("Nombre actualizado.");
+    }));
+  }
+  function openInvite(ctx2, householdId) {
+    const api = cloud();
+    if (!api || typeof api.createInvite !== "function") return;
+    const view3 = viewFor2(ctx2);
+    const item = view3.cloudHomes?.find((home) => home.id === householdId);
+    ctx2.modal("Crear invitaci\xF3n", `<p>Escribe el correo confirmado de la persona que quieres invitar. Wello no env\xEDa correos: copiar\xE1s el enlace y lo entregar\xE1s por el canal que prefieras.</p>${ctx2.field("Correo de la persona invitada", "email", "", "email", 'required maxlength="320" autocomplete="email"')}<p class="small muted">El enlace queda ligado a ese correo, dura 7 d\xEDas y se puede revocar. El token solo aparece dentro del enlace para copiarlo.</p>`, async (values, form) => runForm(form, async () => {
+      const email = String(values.email || "").trim().toLowerCase();
+      if (!email || !email.includes("@")) return false;
+      const result = await accountAction(api, () => api.createInvite({ householdId, email }));
+      const url = String(result?.url || result?.invite?.url || "").trim();
+      if (!url) throw new Error("La invitaci\xF3n no devolvi\xF3 un enlace para compartir.");
+      const expiry = result?.invite?.expires_at || result?.expires_at;
+      ctx2.modal("Enlace de invitaci\xF3n listo", `<p>Invitaci\xF3n para <strong>${ctx2.esc(email)}</strong>. ${ctx2.esc(inviteExpiry(expiry, ctx2))}</p><label class="field household-token-field">Enlace para copiar<input id="household-invite-url" readonly value="${ctx2.esc(url)}" autocomplete="off"></label><div class="row wrap">${actionButton(ctx2, "Copiar enlace", "household-copy-invite", "", "primary")}${actionButton(ctx2, "Ver invitaciones", "household-invites", `data-household-id="${ctx2.esc(householdId)}"`, "ghost")}</div><p class="small muted">No se envi\xF3 ning\xFAn correo autom\xE1ticamente.</p>`);
+    }), "Crear enlace");
+  }
+  async function openMembers(ctx2, householdId) {
+    const api = cloud();
+    if (!api || typeof api.getMembers !== "function") return;
+    const view3 = viewFor2(ctx2);
+    const item = view3.cloudHomes?.find((home) => home.id === householdId);
+    try {
+      const role = await getRole(api, householdId, item?.role);
+      if (role !== "owner") {
+        ctx2.toast?.("Solo la propietaria puede administrar miembros e invitaciones.");
+        return;
+      }
+      const members = normaliseList(await accountAction(api, () => api.getMembers(householdId)), "members");
+      const rows = members.length ? members.map((member) => {
+        const memberRole = roleName(member.role);
+        const remove = memberRole === "owner" ? "" : actionButton(ctx2, "Quitar", "household-remove-member", `data-household-id="${ctx2.esc(householdId)}" data-user-id="${ctx2.esc(member.user_id || member.id || "")}"`, "danger");
+        return `<div class="list-row household-member-row"><span><strong>${ctx2.esc(member.email || "Cuenta autenticada")}</strong><span class="small muted">${memberRole === "owner" ? "Propietaria" : "Miembro"}${member.joined_at ? ` \xB7 Desde ${ctx2.esc(String(member.joined_at).slice(0, 10))}` : ""}</span></span>${remove}</div>`;
+      }).join("") : '<div class="empty household-inline-empty"><h3>No hay miembros todav\xEDa</h3><p>Invita a alguien con un enlace ligado a su correo.</p></div>';
+      ctx2.modal(`Miembros de ${item?.name || "este hogar"}`, `<div class="household-members-list">${rows}</div><div class="row wrap household-member-actions">${actionButton(ctx2, "Crear invitaci\xF3n", "household-invite", `data-household-id="${ctx2.esc(householdId)}"`, "primary")}${actionButton(ctx2, "Invitaciones activas", "household-invites", `data-household-id="${ctx2.esc(householdId)}"`, "secondary")}</div>`);
+    } catch (error) {
+      showError(ctx2, error);
+    }
+  }
+  async function openInvites(ctx2, householdId) {
+    const api = cloud();
+    if (!api || typeof api.listInvites !== "function") return;
+    const view3 = viewFor2(ctx2);
+    const item = view3.cloudHomes?.find((home) => home.id === householdId);
+    try {
+      const role = await getRole(api, householdId, item?.role);
+      if (role !== "owner") {
+        ctx2.toast?.("Solo la propietaria puede administrar invitaciones.");
+        return;
+      }
+      const invites = normaliseList(await accountAction(api, () => api.listInvites(householdId)), "invites");
+      const rows = invites.length ? invites.map((invite) => `<div class="list-row household-invite-row"><span><strong>${ctx2.esc(invite.email || "Correo invitado")}</strong><span class="small muted">${invite.expires_at ? `Expira ${ctx2.esc(String(invite.expires_at).slice(0, 10))}` : "V\xE1lida 7 d\xEDas"}</span></span>${invite.revoked_at ? '<span class="pill">Revocada</span>' : actionButton(ctx2, "Revocar", "household-revoke-invite", `data-invite-id="${ctx2.esc(invite.id || invite.invite_id || "")}" data-household-id="${ctx2.esc(householdId)}"`, "danger")}</div>`).join("") : '<div class="empty household-inline-empty"><h3>No hay invitaciones activas</h3><p>Los enlaces expiran en 7 d\xEDas y no se env\xEDan autom\xE1ticamente.</p></div>';
+      ctx2.modal(`Invitaciones de ${item?.name || "este hogar"}`, `<div class="household-invites-list">${rows}</div><div class="row wrap household-member-actions">${actionButton(ctx2, "Crear invitaci\xF3n", "household-invite", `data-household-id="${ctx2.esc(householdId)}"`, "primary")}${actionButton(ctx2, "Volver a miembros", "household-members", `data-household-id="${ctx2.esc(householdId)}"`, "ghost")}</div>`);
+    } catch (error) {
+      showError(ctx2, error);
+    }
+  }
+  function confirmAction(ctx2, message, operation) {
+    const run = async (form) => runForm(form, async () => {
+      try {
+        await operation();
+        ctx2.render?.();
+      } catch (error) {
+        showError(ctx2, error);
+      }
+    });
+    if (typeof ctx2.confirm === "function") ctx2.confirm(message, run);
+    else ctx2.modal("\xBFConfirmamos?", `<p>${ctx2.esc(message)}</p>`, run, "S\xED, continuar");
+  }
+  function removeMember(ctx2, data) {
+    const api = cloud();
+    const remove = api?.removeMember || api?.remove;
+    if (!api || typeof remove !== "function") return;
+    confirmAction(ctx2, "Quitar a esta persona del hogar compartido? Ya no podr\xE1 consultar ni editar sus registros.", async () => {
+      await accountAction(api, () => remove.call(api, data.householdId, data.userId));
+      ctx2.toast?.("Miembro retirado.");
+      await refreshHouseholds(ctx2, { silent: true });
+    });
+  }
+  function revokeInvite(ctx2, data) {
+    const api = cloud();
+    const revoke = api?.revokeInvite || api?.revoke;
+    if (!api || typeof revoke !== "function") return;
+    confirmAction(ctx2, "Revocar este enlace de invitaci\xF3n? Dejar\xE1 de funcionar para la persona invitada.", async () => {
+      await accountAction(api, () => revoke.call(api, data.inviteId));
+      ctx2.toast?.("Invitaci\xF3n revocada.");
+      await openInvites(ctx2, data.householdId);
+    });
+  }
+  async function leaveShared(ctx2, householdId) {
+    const api = cloud();
+    const leave = api?.leaveHousehold || api?.leave;
+    if (!api || typeof leave !== "function") return;
+    const view3 = viewFor2(ctx2);
+    const item = view3.cloudHomes?.find((home) => home.id === householdId);
+    const role = await getRole(api, householdId, item?.role);
+    if (role === "owner") {
+      ctx2.toast?.("La propietaria no puede salir de este hogar.");
+      return;
+    }
+    confirmAction(ctx2, `Salir de ${item?.name || "este hogar"}? Perder\xE1s el acceso a sus registros compartidos.`, async () => {
+      await accountAction(api, () => leave.call(api, householdId));
+      view3.cloudHomes = (view3.cloudHomes || []).filter((home) => home.id !== householdId);
+      ctx2.toast?.("Saliste del hogar compartido.");
+    });
+  }
+  async function acceptInvite(ctx2) {
+    const api = cloud();
+    const token = pendingInviteToken(ctx2);
+    if (!token) return;
+    if (!api || !cloudAuthenticated(api) || typeof api.acceptInvite !== "function") {
+      ctx2.toast?.("Primero inicia sesi\xF3n con Google para aceptar la invitaci\xF3n.");
+      return;
+    }
+    const email = cloudEmail(api);
+    const run = async () => {
+      try {
+        const result = await accountAction(api, () => api.acceptInvite(token));
+        viewFor2(ctx2).pendingInviteToken = "";
+        try {
+          globalThis.sessionStorage?.removeItem("wello:invite-pending");
+        } catch {
+        }
+        if (globalThis.history?.replaceState && globalThis.location) globalThis.history.replaceState({}, globalThis.document?.title || "Wello", `${globalThis.location.pathname}${globalThis.location.search}#hogares`);
+        await refreshHouseholds(ctx2, { silent: true });
+        ctx2.render?.();
+        ctx2.toast?.(`Invitaci\xF3n aceptada${result?.homeUuid ? ". Hogar agregado." : "."}`);
+      } catch (error) {
+        showError(ctx2, error);
+      }
+    };
+    confirmAction(ctx2, `Aceptar esta invitaci\xF3n con la cuenta ${email || "autenticada en Google"}?`, run);
+  }
+  async function importLocal(ctx2) {
+    const api = cloud();
+    if (!api || !cloudAuthenticated(api) || typeof api.importFromLocal !== "function") {
+      ctx2.toast?.("Inicia sesi\xF3n para revisar una importaci\xF3n local.");
+      return;
+    }
+    const local = ctx2.readLocalState?.() || ctx2.state();
+    const homes = Array.isArray(local.households) ? local.households.length : 0;
+    ctx2.modal("Revisar importaci\xF3n local", `<p>Tu copia local contiene <strong>${homes}</strong> hogar${homes === 1 ? "" : "es"} y registros personales.</p><p>La importaci\xF3n es expl\xEDcita: no se ejecutar\xE1 ahora sin tu confirmaci\xF3n. Gym, mood, citas y h\xE1bitos personales se revisan por separado; los hogares locales no conceden acceso a nadie autom\xE1ticamente.</p>`, async (_values, form) => runForm(form, async () => {
+      const result = await accountAction(api, () => api.importFromLocal({ confirm: true }));
+      ctx2.toast?.(result?.status === "partial" ? "Importaci\xF3n parcial: algunos hogares siguen locales." : "Copia importada en tu cuenta. Los hogares locales no se comparten autom\xE1ticamente.");
+      ctx2.render?.();
+    }), "Confirmar importaci\xF3n");
+  }
+  function registerHouseholds(ctx2) {
+    const view3 = viewFor2(ctx2);
+    view3.pendingInviteToken = inviteTokenFromHash(globalThis.location?.hash || "") || view3.pendingInviteToken || "";
+    ctx2.action?.("household-cloud-refresh", () => refreshHouseholds(ctx2));
+    ctx2.action?.("household-publish", (data) => publishLocal(ctx2, data.localId));
+    ctx2.action?.("household-shared-rename", (data) => renameShared(ctx2, data.householdId));
+    ctx2.action?.("household-members", (data) => openMembers(ctx2, data.householdId));
+    ctx2.action?.("household-invite", (data) => openInvite(ctx2, data.householdId));
+    ctx2.action?.("household-invites", (data) => openInvites(ctx2, data.householdId));
+    ctx2.action?.("household-remove-member", (data) => removeMember(ctx2, data));
+    ctx2.action?.("household-revoke-invite", (data) => revokeInvite(ctx2, data));
+    ctx2.action?.("household-leave", (data) => leaveShared(ctx2, data.householdId));
+    ctx2.action?.("household-accept-invite", () => acceptInvite(ctx2));
+    ctx2.action?.("household-invite-auth", () => cloud()?.open?.());
+    ctx2.action?.("household-copy-invite", async () => {
+      const url = globalThis.document?.getElementById("household-invite-url")?.value || "";
+      if (!url) return;
+      try {
+        await globalThis.navigator?.clipboard?.writeText(url);
+        ctx2.toast?.("Enlace copiado.");
+      } catch {
+        globalThis.document?.getElementById("household-invite-url")?.select?.();
+        ctx2.toast?.("Selecciona el enlace para copiarlo.");
+      }
+    });
+    ctx2.action?.("data-import-local", () => importLocal(ctx2));
+    view3.refreshHouseholds = (options = {}) => refreshHouseholds(ctx2, options);
+    if (cloudAuthenticated(cloud()) && typeof cloud()?.listHouseholds === "function") void refreshHouseholds(ctx2, { silent: true });
+  }
+
   // src/app.js
   var ASSETS = window.WELLO_ASSETS || {};
   var routes = [["inicio", "Inicio", "house"], ["habitos", "H\xE1bitos", "leaf"], ["mascotas", "Mascotas", "paw-print"], ["alimentos", "Alimentos", "refrigerator"], ["calendario", "Calendario", "calendar-days"], ["gym", "Gym", "dumbbell"]];
@@ -26506,8 +26955,68 @@
       return false;
     }
   }
+  function cloneState(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
+  function persistRemote(next) {
+    const previous = cloneState(state);
+    const key = storageKey(namespace);
+    const previousRaw = localStorage.getItem(key);
+    try {
+      validateState(next);
+      saveState(localStorage, next, namespace);
+      state = next;
+      saveFailed = false;
+      render();
+      return true;
+    } catch (error) {
+      try {
+        if (previousRaw === null) localStorage.removeItem(key);
+        else localStorage.setItem(key, previousRaw);
+      } catch {
+      }
+      state = previous;
+      throw error;
+    }
+  }
+  function cloudAccountState() {
+    const api = window.WelloCloud;
+    if (!api) return null;
+    try {
+      const value = typeof api.getState === "function" ? api.getState() : api.state;
+      return value || null;
+    } catch {
+      return null;
+    }
+  }
+  function cloudAuthenticated2() {
+    const api = window.WelloCloud;
+    if (!api) return false;
+    try {
+      if (typeof api.isAuthenticated === "function") {
+        const result = api.isAuthenticated();
+        return !result || typeof result.then !== "function" ? Boolean(result) : false;
+      }
+      if (typeof api.auth === "function") {
+        const result = api.auth();
+        return !result || typeof result.then !== "function" ? Boolean(result) : false;
+      }
+      if (typeof api.auth === "boolean") return api.auth;
+      const account = cloudAccountState();
+      return Boolean(account?.authenticated || account?.status === "signed_in" || account?.status === "authenticated");
+    } catch {
+      return false;
+    }
+  }
+  function dataCloudPanel() {
+    if (!cloudAuthenticated2()) return "";
+    const account = cloudAccountState();
+    const email = account?.email || account?.user?.email || "cuenta autenticada";
+    return `<section class="panel households-data-cloud"><span class="large-icon mint">${icon3("cloud", 32)}</span><h2>Cuenta en l\xEDnea conectada</h2><p class="muted">${esc(email)}. Tus hogares locales siguen en este dispositivo y no se publican autom\xE1ticamente.</p>${btn("Revisar e importar copia local", "data-import-local", "", "primary")}<p class="small muted">La importaci\xF3n requiere una confirmaci\xF3n aparte. Gym, mood, citas y h\xE1bitos personales permanecen personales; una copia local no concede acceso a ning\xFAn hogar.</p></section>`;
+  }
   function currentRoute() {
     const route = location.hash.slice(1).split("?")[0];
+    if (route === "invitacion") return "hogares";
     return [...routes.map((x) => x[0]), "hogares", "datos"].includes(route) ? route : "inicio";
   }
   function navigate(route) {
@@ -26528,14 +27037,22 @@
     lastFocus?.focus?.();
   }
   function confirm3(message, callback) {
-    modal("\xBFConfirmamos?", `<p>${esc(message)}</p>`, () => callback(), "S\xED, continuar");
+    modal("\xBFConfirmamos?", `<p>${esc(message)}</p>`, (_values, form) => callback(form), "S\xED, continuar");
   }
   var ctx = { state: () => state, home: () => state.households.find((h) => h.id === state.activeHousehold) || state.households[0], view: view2, today, id: uid, esc, prettyDate: (d) => d ? dateObject(d).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" }) : "Sin fecha", money: (n) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n), img, icon: icon3, field: field3, select: select3, btn, empty, save, render, toast: toast2, navigate, modal, closeModal, confirm: confirm3, action: (name, fn) => actions.set(name, fn), change: (name, fn) => changes.set(name, fn) };
+  ctx.readLocalState = () => {
+    try {
+      return JSON.parse(JSON.stringify(loadState(localStorage, "local")));
+    } catch {
+      return JSON.parse(JSON.stringify(initialState()));
+    }
+  };
   registerGym(ctx);
   registerHabits(ctx);
   registerPets(ctx);
   registerFoods(ctx);
   registerCalendar(ctx);
+  registerHouseholds(ctx);
   function homePage() {
     const habits = visibleHabits(state).filter((h) => scheduled(h, today())).slice(0, 6);
     const events = deriveEvents(state, today(), addDays(today(), 14)).filter((e) => ["mascotas", "citas"].includes(e.type)).slice(0, 4);
@@ -26546,11 +27063,8 @@
       return `<div class="compact-habit"><span>${esc(h.name)}</span><button class="daily-check ${p.done ? "done" : ""}" data-action="home-habit" data-id="${h.id}" aria-label="${h.type === "quantity" ? "Registrar cantidad de" : "Marcar o desmarcar"} ${esc(h.name)}" aria-pressed="${p.done}">${icon3("check", 17)}</button></div>`;
     }).join("") : `<div class="home-empty-habit"><span class="small muted">Un h\xE1bito chiquito puede cambiar tu d\xEDa.</span><h3>Tu primer paso empieza aqu\xED.</h3><p>Leer, tomar agua, salir a caminar.<br>T\xFA eliges qu\xE9 y cu\xE1ndo.</p>${btn("Crear un h\xE1bito", "habit-new", "", "secondary")}${img("seed")}</div>`}</section><section class="panel upcoming"><div class="section-head"><h2>Lo que viene</h2><button class="text-link" data-action="nav" data-route="calendario" aria-label="Abrir calendario">${icon3("arrow-up-right", 18)}</button></div>${events.length ? events.map((e) => `<div class="list-row"><span class="upcoming-date" style="background:${eventColors(e).soft}">${Number(e.date.slice(-2))}<small>${dateObject(e.date).toLocaleDateString("es-MX", { month: "short" })}</small></span><span><strong>${esc(e.title)}</strong><span class="small muted">${esc(e.time || "Todo el d\xEDa")}</span></span></div>`).join("") : `<div class="calm-space">${icon3("calendar-heart", 40)}<h3>Espacio para lo que importa.</h3><p>Agrega tus citas y los pr\xF3ximos<br>cuidados de tus mascotas.</p>${btn("Ver mi calendario", "nav", 'data-route="calendario"', "ghost")}</div>`}</section></div><div class="gentle-note">${icon3("heart", 16)} A veces cuidarte es hacer menos, pero con m\xE1s cari\xF1o.</div>`;
   }
-  function householdsPage() {
-    return `<div class="page-heading"><div><span class="eyebrow">LO QUE COMPARTIMOS</span><h1>Mis hogares</h1><p>Un lugar para cuidar lo cotidiano.</p></div>${btn("Crear hogar", "home-new")}</div><div class="note">${icon3("monitor", 22)}<span>Estos espacios est\xE1n guardados en este dispositivo. No son hogares compartidos en la nube.</span></div><div class="grid-two">${state.households.map((h) => `<article class="panel household-card"><span class="household-mark">${icon3("house", 32)}</span><h2>${esc(h.name)}</h2><p class="muted">Mascotas, alimentos y h\xE1bitos del hogar.</p><div class="row">${btn(h.id === state.activeHousehold ? "Hogar activo" : "Cambiar a este hogar", "home-switch", `data-id="${h.id}"`, "secondary")}${btn(icon3("pencil", 18), "home-rename", `data-id="${h.id}" aria-label="Cambiar nombre"`, "icon-button")}</div></article>`).join("")}</div><section class="panel"><h2>Lo tuyo sigue contigo</h2><p class="muted">Gym, tu mood, tus citas personales y los h\xE1bitos \xABPara m\xED\xBB no cambian al elegir otro hogar. Cada hogar conserva sus propias mascotas, alimentos y compras.</p></section>`;
-  }
   function dataPage() {
-    return `<div class="page-heading"><div><span class="eyebrow">T\xDA DECIDES QU\xC9 GUARDAR</span><h1>Mis datos</h1><p>Una copia de lo que has construido, siempre a mano.</p></div></div><div class="note"><span>${icon3("shield-check", 23)}</span><span>Guardado local en este navegador. Haz copias con frecuencia. Cambiar de navegador, borrar sus datos o mover el HTML puede cambiar el almacenamiento disponible.</span></div><div class="grid-two"><section class="panel"><span class="large-icon lavender">${icon3("dumbbell", 32)}</span><h2>Mi entrenamiento</h2><p class="muted">Rutinas, cargas por serie y observaciones. Sin mezclarlo con los datos del hogar.</p>${btn("Exportar Gym", "data-export", 'data-type="gym"', "secondary")}</section><section class="panel"><span class="large-icon mint">${icon3("house", 32)}</span><h2>${esc(ctx.home().name)}</h2><p class="muted">Mascotas, inventario, s\xFAper, compras y h\xE1bitos familiares de este hogar.</p>${btn("Exportar hogar", "data-export", 'data-type="home"', "secondary")}</section></div><section class="panel"><div class="section-head"><h2>Importar una copia</h2><span class="pill">Sin sobrescribir duplicados</span></div><p class="muted">Elige un archivo JSON y revisa lo que se a\xF1adir\xE1 antes de confirmar. Las copias anteriores forma-gym-v1 y forma-home-v1 tienen compatibilidad estructural; los formatos originales no estaban disponibles para comprobarla por completo.</p><label class="file-picker">${icon3("upload", 22)}<span>Seleccionar archivo JSON</span><input type="file" accept="application/json,.json" id="backup-file" aria-label="Importar copia JSON"></label><p class="small muted">Hogar de destino para copias de hogar: <strong>${esc(ctx.home().name)}</strong>. Si vas a cambiarlo, hazlo antes de importar.</p></section><section class="panel"><h2>Mis cargas hist\xF3ricas</h2><p class="muted">Las cargas verificadas se entregan en un JSON privado separado. No est\xE1n precargadas ni incluidas en la app p\xFAblica. Para incorporarlas a tu espacio personal, selecciona ese archivo arriba y revisa las observaciones.</p><p class="small muted">Cuando la fuente no confirma series o repeticiones, se conservan como observaciones. Los pesos en discos no se convierten en peso total de barra.</p></section><section class="panel"><div class="section-head"><h2>Una copia completa</h2>${btn("Exportar todo Wello", "data-export", 'data-type="all"', "secondary")}</div><p class="small muted">Incluye tus registros personales, todos los hogares locales y las notas de mood. Es un archivo privado: no lo subas a un repositorio p\xFAblico.</p></section><section class="panel"><h2>Acceso r\xE1pido al s\xFAper</h2><p class="muted">Programa tu tarjeta NFC con la URL HTTPS y el fragmento #super?accion=agregar. La tarjeta abre un formulario; nunca crea compras sola.</p><div class="row wrap">${btn("Probar el acceso directo", "nfc-test", "", "secondary")}${btn("Copiar enlace HTTPS", "nfc-copy", "", "ghost")}</div><p class="small muted">El iPhone abre registros URL/NDEF. La web no necesita leer la tarjeta. El hardware f\xEDsico no se ha probado.</p></section><section class="panel credits"><h2>Acerca de Wello</h2><p class="small muted">Iconos ilustrados aportados por ti de <a href="https://icons8.com" target="_blank" rel="noopener noreferrer">Icons8</a>; caritas recortadas de tu referencia. Ilustraciones 3D de referencia aportadas por ti (IconScout y Healthy Life). Verifica sus licencias antes de una distribuci\xF3n comercial. Iconos de interfaz Lucide (ISC). Wello no ofrece indicaciones m\xE9dicas: registra la informaci\xF3n que t\xFA capturas.</p></section>`;
+    return `${dataCloudPanel()}<div class="page-heading"><div><span class="eyebrow">T\xDA DECIDES QU\xC9 GUARDAR</span><h1>Mis datos</h1><p>Una copia de lo que has construido, siempre a mano.</p></div></div><div class="note"><span>${icon3("shield-check", 23)}</span><span>${cloudAuthenticated2() ? "Este navegador conserva una copia de tu cuenta. Tus registros personales y los hogares compartidos se sincronizan con Supabase; los hogares que a\xFAn no compartes permanecen locales. Revisa el estado de sincronizaci\xF3n y conserva tus respaldos." : "Guardado local en este navegador. Haz copias con frecuencia. Cambiar de navegador, borrar sus datos o mover el HTML puede cambiar el almacenamiento disponible."}</span></div><div class="grid-two"><section class="panel"><span class="large-icon lavender">${icon3("dumbbell", 32)}</span><h2>Mi entrenamiento</h2><p class="muted">Rutinas, cargas por serie y observaciones. Sin mezclarlo con los datos del hogar.</p>${btn("Exportar Gym", "data-export", 'data-type="gym"', "secondary")}</section><section class="panel"><span class="large-icon mint">${icon3("house", 32)}</span><h2>${esc(ctx.home().name)}</h2><p class="muted">Mascotas, inventario, s\xFAper, compras y h\xE1bitos familiares de este hogar.</p>${btn("Exportar hogar", "data-export", 'data-type="home"', "secondary")}</section></div><section class="panel"><div class="section-head"><h2>Importar una copia</h2><span class="pill">Sin sobrescribir duplicados</span></div><p class="muted">Elige un archivo JSON y revisa lo que se a\xF1adir\xE1 antes de confirmar. Las copias anteriores forma-gym-v1 y forma-home-v1 tienen compatibilidad estructural; los formatos originales no estaban disponibles para comprobarla por completo.</p><label class="file-picker">${icon3("upload", 22)}<span>Seleccionar archivo JSON</span><input type="file" accept="application/json,.json" id="backup-file" aria-label="Importar copia JSON"></label><p class="small muted">Hogar de destino para copias de hogar: <strong>${esc(ctx.home().name)}</strong>. Si vas a cambiarlo, hazlo antes de importar.</p></section><section class="panel"><h2>Mis cargas hist\xF3ricas</h2><p class="muted">Las cargas verificadas se entregan en un JSON privado separado. No est\xE1n precargadas ni incluidas en la app p\xFAblica. Para incorporarlas a tu espacio personal, selecciona ese archivo arriba y revisa las observaciones.</p><p class="small muted">Cuando la fuente no confirma series o repeticiones, se conservan como observaciones. Los pesos en discos no se convierten en peso total de barra.</p></section><section class="panel"><div class="section-head"><h2>Una copia completa</h2>${btn("Exportar todo Wello", "data-export", 'data-type="all"', "secondary")}</div><p class="small muted">Incluye tus registros personales, todos los hogares locales y las notas de mood. Es un archivo privado: no lo subas a un repositorio p\xFAblico.</p></section><section class="panel"><h2>Acceso r\xE1pido al s\xFAper</h2><p class="muted">Programa tu tarjeta NFC con la URL HTTPS y el fragmento #super?accion=agregar. La tarjeta abre un formulario; nunca crea compras sola.</p><div class="row wrap">${btn("Probar el acceso directo", "nfc-test", "", "secondary")}${btn("Copiar enlace HTTPS", "nfc-copy", "", "ghost")}</div><p class="small muted">El iPhone abre registros URL/NDEF. La web no necesita leer la tarjeta. El hardware f\xEDsico no se ha probado.</p></section><section class="panel credits"><h2>Acerca de Wello</h2><p class="small muted">Iconos ilustrados aportados por ti de <a href="https://icons8.com" target="_blank" rel="noopener noreferrer">Icons8</a>; caritas recortadas de tu referencia. Ilustraciones 3D de referencia aportadas por ti (IconScout y Healthy Life). Verifica sus licencias antes de una distribuci\xF3n comercial. Iconos de interfaz Lucide (ISC). Wello no ofrece indicaciones m\xE9dicas: registra la informaci\xF3n que t\xFA capturas.</p></section>`;
   }
   function render() {
     const route = currentRoute();
@@ -26561,7 +27075,7 @@
     });
     const sel = document.getElementById("household-select");
     sel.innerHTML = state.households.map((h) => `<option value="${esc(h.id)}" ${h.id === state.activeHousehold ? "selected" : ""}>${esc(h.name)}</option>`).join("") + '<option value="__manage">Mis hogares\u2026</option>';
-    const pages = { inicio: homePage, habitos: () => renderHabits(ctx), gym: () => renderGym(ctx), mascotas: () => renderPets(ctx), alimentos: () => renderFoods(ctx), calendario: () => renderCalendar(ctx), hogares: householdsPage, datos: dataPage };
+    const pages = { inicio: homePage, habitos: () => renderHabits(ctx), gym: () => renderGym(ctx), mascotas: () => renderPets(ctx), alimentos: () => renderFoods(ctx), calendario: () => renderCalendar(ctx), hogares: () => renderHouseholds(ctx), datos: dataPage };
     document.getElementById("main").innerHTML = pages[route]();
     document.title = `Wello \xB7 ${routes.find((r) => r[0] === route)?.[1] || (route === "datos" ? "Mis datos" : "Mis hogares")}`;
     document.getElementById("top-title").textContent = routes.find((r) => r[0] === route)?.[1] || (route === "datos" ? "Mis datos" : "Mis hogares");
@@ -26692,7 +27206,6 @@
         await handler(el.dataset, e, el);
       } catch (error) {
         toast2(error.message || "No se pudo completar la acci\xF3n.");
-        console.error(error);
       }
     }
   });
@@ -26712,7 +27225,6 @@
       await handler(e.target.dataset, e, e.target);
     } catch (error) {
       toast2(error.message);
-      console.error(error);
     }
   });
   document.getElementById("dialog").addEventListener("submit", async (e) => {
@@ -26726,7 +27238,6 @@
       if (result !== false && activeModalHandler === fn) closeModal();
     } catch (error) {
       toast2(error.message);
-      console.error(error);
     }
   });
   document.getElementById("dialog").addEventListener("click", (e) => {
@@ -26736,6 +27247,14 @@
     consumeNFC();
     render();
     window.scrollTo({ top: 0 });
+  });
+  window.addEventListener("wello:cloud-updated", () => {
+    const label = document.getElementById("save-status");
+    const status = cloudAccountState()?.syncStatus;
+    if (label) label.textContent = status === "synced" ? "Sincronizado con la cuenta" : status === "conflict" ? "Requiere revisi\xF3n" : status === "pending" ? "Sincronizaci\xF3n pendiente" : "Guardado en este dispositivo";
+    const refresh = view2.refreshHouseholds;
+    if (refresh) Promise.resolve(refresh({ silent: true, useCloudRefresh: false })).then(() => render()).catch(() => render());
+    else render();
   });
   window.addEventListener("storage", (e) => {
     if (e.key === storageKey(namespace)) {
@@ -26748,13 +27267,17 @@
       }
     }
   });
-  window.WelloApp = { getState: () => JSON.parse(JSON.stringify(state)), setState: (s) => {
-    validateState(s);
-    state = s;
+  window.WelloApp = { getState: () => cloneState(state), setState: (s, options = {}) => {
+    const next = cloneState(s);
+    validateState(next);
+    if (options?.source === "remote") return persistRemote(next);
+    state = next;
     saveFailed = false;
     save();
     render();
+    return true;
   }, switchNamespace: (n) => {
+    if (n === namespace) return cloneState(state);
     let next;
     try {
       next = loadState(localStorage, n);
@@ -26764,14 +27287,17 @@
     namespace = n;
     state = next;
     saveFailed = false;
+    const refreshHouseholds2 = view2.refreshHouseholds;
     for (const key of Object.keys(view2)) delete view2[key];
+    if (refreshHouseholds2) view2.refreshHouseholds = refreshHouseholds2;
     closeModal();
     render();
+    return true;
   }, toast: toast2, navigate, openSuper: () => {
     view2.foodTab = "shopping";
     navigate("alimentos");
     openShopping(ctx);
-  }, getNamespace: () => namespace };
+  }, getNamespace: () => namespace, closeModal, render, readLocalState: () => ctx.readLocalState() };
   render();
   consumeNFC();
 })();
