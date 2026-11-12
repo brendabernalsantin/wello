@@ -205,3 +205,21 @@ Cada fila es una entrada independiente dentro de su rutina, aunque el nombre apa
 - [x] Sin sesión no hay entrada a modo local, ni por botón ni por método del cliente; errores de acceso conservan bloqueo. Cerrar sesión, perderla o cambiar de cuenta oculta la app y cierra diálogos inmediatamente. Tras entrar con Google se habilitan los módulos para la cuenta correspondiente.
 - [x] NFC e invitaciones conservan sus destinos a través de Google; el HTML descargable local y las copias privadas existentes no se eliminan ni modifican.
 - [x] Pruebas de bloqueo, acceso autenticado simulado, cierre, errores y rutas directas. Publicar y verificar el artefacto actualizado en Pages sin modificar permisos RLS ni credenciales.
+
+## Revisión por espacios · pendientes recibidos el 12 noviembre 2026
+
+Estado: Mascotas y Calendario siguen en anotación y revisión previa. Inicio sí fue autorizado después para implementación; ver su apartado al final. Detalle en docs/CAMBIOS-PENDIENTES.md.
+
+- [ ] Mascotas / Trucos: permitir reutilizar para una mascota los trucos registrados para otro perro o mascota, sin volver a escribirlos. Revisar selección individual o catálogo completo y tratamiento de duplicados. La propuesta separa definiciones reutilizables del historial de prácticas de cada mascota.
+- [ ] Calendario: mostrar lo efectivamente cumplido, no las tareas sólo programadas. Ejemplos solicitados: hábitos marcados con check y registros de entrenamiento, en sus fechas reales. Revisar metas parciales, entrenamientos parciales, mascotas y citas antes de fijar sus reglas; no inventar cumplimiento ni borrar registros.
+- [ ] Calendario / Colores: respetar los colores de las categorías o secciones, no los colores manuales de cada hábito. Sustituye el criterio anterior de color individual en Calendario, sin modificar los colores guardados en los hábitos. Coherencia en filtros, leyenda, Mes, Agenda y detalles; confirmar las referencias por categoría en la revisión.
+- [ ] Revisar con la usuaria sección por sección: recopilar sus siguientes observaciones, resumir lo entendido y resolver las decisiones de cada espacio antes de implementar. No iniciar estos cambios durante la recopilación.
+
+### Inicio · observaciones recibidas a las 13:49
+
+- [x] Retirar de Inicio exactamente estos textos: «Buenas tardes», «No tienes que hacerlo todo hoy.», «Solo empezar por algo que te haga bien.», «Aquí, cada pequeño paso cuenta.» y «Todo lo que cuidas, aquí.». No retirar otros textos no señalados.
+- [x] Revisar y corregir la apariencia verdosa de la chica meditando. Diagnóstico pendiente; no asumir todavía una causa ni sustituir la ilustración sin acordarlo.
+- [x] Hábitos de hoy: mostrar como máximo cuatro hábitos en Inicio (sustituye el límite anterior de seis) y debajo un acceso claro a los demás en la sección de Hábitos, evitando que Inicio se haga extenso.
+- [x] Al marcar un hábito como realizado, enviarlo al final de la lista y subir los pendientes. Ordenar primero pendientes y luego realizados antes de mostrar los cuatro, para que los siguientes sin completar vayan apareciendo. No borrar hábitos ni registros de cumplimiento.
+
+Autorización posterior: «aquí ya haz los cambios». Inicio implementado y validado con 6 grupos UI y 5 pruebas nuevas de lógica; Mascotas y Calendario siguen pendientes.

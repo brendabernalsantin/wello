@@ -32,3 +32,7 @@ Estructura de ampliación: cloud.js controla, cloud-domain.js y cloud-sync.js re
 ## Acceso web obligatorio · 12 noviembre 2026
 
 La propietaria confirmó el acceso real Google mediante captura y solicita que la web no deje ver módulos antes de iniciar sesión. En production la plantilla arranca bloqueada desde el HTML/CSS inicial, con una pantalla de acceso dedicada no descartable. Cloud habilita los módulos sólo tras cargar el namespace de la cuenta; logout/cambio/pérdida bloquean inmediatamente. Se quitan entradas de modo local y se protegen acciones/guardados; el HTML descargable independiente conserva su modo local. NFC/invitaciones siguen pendientes hasta el acceso. Es un control de interfaz sobre una web estática; el código permanece público, y los datos remotos siguen protegidos por RLS.
+
+## Pulido de Inicio autorizado · 12 noviembre 2026, 13:49
+
+La usuaria cambia la recopilación por implementación inmediata sólo para Inicio: retirar los cinco textos indicados, corregir el tono verdoso de la ilustración existente sin reemplazarla, mostrar hasta cuatro hábitos y un acceso inferior a todos, y priorizar pendientes sobre realizados antes de limitar la vista. Reutilizar los mismos checks/cantidades y registros. Mascotas/trucos y Calendario/cumplimiento/colores permanecen únicamente como pendientes de revisión y no se implementan en esta actualización. El bloqueo Google de la versión publicada se conserva.
