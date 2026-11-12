@@ -40,3 +40,7 @@ La usuaria cambia la recopilación por implementación inmediata sólo para Inic
 ## Corrección puntual de Inicio · transparencia de ilustración
 
 La usuaria rechaza el rectángulo blanco del JPEG. Editar la ilustración existente para quitar sólo el fondo y generar un PNG con alpha real; conservar sujeto, encuadre y colores. Cambiar el asset meditation del build, quitar el radio de tarjeta y mantener mezcla normal, filtro none y opacidad completa para integrarla directamente en el fondo menta. Verificar el canal alpha y la apariencia final, sin alterar hábitos, autenticación, Mascotas ni Calendario.
+
+## Pulido de Hábitos autorizado · 12 noviembre 14:16
+
+Renombrar mood en la interfaz como estado de ánimo, quitar los dos textos indicados, y concentrar emoción/carita/nota del día elegido dentro del banner rosa. Ocultar sólo la lista inferior de historial emocional; sus datos y eventos/edición de Calendario se conservan. La fecha común se muestra junto al encabezado con etiqueta explícita para hábitos y estado de ánimo, y Crear hábito se mueve junto a Lo que cuido de mí. Si la fecha no es hoy, el título no debe afirmar Hoy. Editar las seis imágenes existentes a PNG transparente sin reemplazar el catálogo de emociones, y añadir animación suave con límite de duración y alternativa sin movimiento. Conservar IDs, APIs y copias privadas. No implementar aún reutilización de trucos, calendario de cumplimiento ni colores pendientes.

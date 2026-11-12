@@ -17,6 +17,18 @@ const goalPeriods=new Set(['day','week']);
 function escape(ctx,value='') { return typeof ctx?.esc==='function'?ctx.esc(value):coreEsc(value); }
 function icon(ctx,name,size=20) { return typeof ctx?.icon==='function'?ctx.icon(name,size):''; }
 function todayOf(ctx) { return typeof ctx?.today==='function'?ctx.today():'1970-01-01'; }
+function safeDate(ctx,value) {
+  const today=todayOf(ctx);
+  return validDate(value)?value:(validDate(today)?today:'1970-01-01');
+}
+function selectedHabitDate(ctx) { return safeDate(ctx,ctx?.view?.habitDate); }
+function moodActionDate(ctx,data={}) {
+  if(validDate(data.date))return data.date;
+  return data.moodContext==='habits'?selectedHabitDate(ctx):safeDate(ctx,todayOf(ctx));
+}
+function moodSprite(ctx,id,imgClass='') {
+  return typeof ctx?.img==='function'?`<span class="mood-sprite">${ctx.img(`mood-${id}`,imgClass)}</span>`:'';
+}
 function toast(ctx,message) { if(typeof ctx?.toast==='function')ctx.toast(message); }
 function persist(ctx,rollback=()=>{}) {
   try { if(typeof ctx?.save!=='function'||ctx.save()!==false)return true; } catch(error) { toast(ctx,error.message||'No se pudo guardar.'); }
@@ -431,10 +443,11 @@ export function toggleHabit(ctx,id,date=todayOf(ctx)) {
   if(typeof ctx?.render==='function')ctx.render();
 }
 
-export function openMood(ctx,date=todayOf(ctx)) {
+export function openMood(ctx,date) {
+  const selectedDate=safeDate(ctx,date);
   const moods=ctx.state().personal.moods||[];
-  const mood=moods.find(item=>item.date===date);
-  ctx.modal('Mi mood de hoy',`${inputField(ctx,'¿De qué día?','date',date,'date','required')}<fieldset class="mood-choices"><legend>¿Cómo te sientes?</legend><div class="mood-grid">${MOODS.map(item=>`<label class="mood-option"><input type="radio" name="mood" value="${item.id}" ${mood?.mood===item.id?'checked':''} required>${typeof ctx?.img==='function'?ctx.img('mood-'+item.id):''}<span>${item.name}</span></label>`).join('')}</div></fieldset><label class="field">Una nota para ti <span class="muted">(opcional)</span><textarea name="note" maxlength="1000" rows="3" placeholder="¿Qué quieres recordar de este día?">${escape(ctx,mood?.note||'')}</textarea><span class="small muted">Hasta 1000 caracteres. Solo para ti.</span></label>`,data=>{
+  const mood=moods.find(item=>item.date===selectedDate);
+  ctx.modal('Mi estado de ánimo',`${inputField(ctx,'Fecha','date',selectedDate,'date','required aria-label="Fecha del estado de ánimo"')}<fieldset class="mood-choices"><legend>¿Cómo te sientes?</legend><div class="mood-grid">${MOODS.map(item=>`<label class="mood-option"><input type="radio" name="mood" value="${item.id}" ${mood?.mood===item.id?'checked':''} required>${typeof ctx?.img==='function'?ctx.img('mood-'+item.id,'mood-optionimg-animation'):''}<span>${item.name}</span></label>`).join('')}</div></fieldset><label class="field">Una nota para ti <span class="muted">(opcional)</span><textarea name="note" maxlength="1000" rows="3" placeholder="¿Qué quieres recordar de este día?">${escape(ctx,mood?.note||'')}</textarea><span class="small muted">Hasta 1000 caracteres. Solo para ti.</span></label>`,data=>{
     try {
       const beforeMoods=structuredClone(ctx.state().personal.moods);
       upsertMood(ctx.state(),data.date,data.mood,data.note);
@@ -449,13 +462,18 @@ export function openMood(ctx,date=todayOf(ctx)) {
 }
 
 export function renderHabits(ctx) {
-  const date=ctx.view.habitDate||todayOf(ctx);
+  const date=selectedHabitDate(ctx);
   const list=visibleHabits(ctx.state());
   const mood=(ctx.state().personal.moods||[]).find(item=>item.date===date);
   const week=weekStart(date);
   const moodName=MOODS.find(item=>item.id===mood?.mood)?.name?.toLowerCase()||'';
-  const moodHistory=(ctx.state().personal.moods||[]).slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);
-  return `<div class="page-heading"><div><span class="eyebrow">PEQUEÑOS PASOS, A TU RITMO</span><h1>Mis hábitos</h1><p>Un espacio para lo que te hace bien.</p></div>${ctx.btn('Crear hábito','habit-new','','primary')}</div><section class="mood-banner"><div><span class="eyebrow">UN MOMENTO PARA TI</span><h2>Mi mood de hoy</h2><p>${mood?`Te sientes ${escape(ctx,moodName)}.`:'No todos los días se sienten igual.'} ${mood?'Puedes cambiarlo cuando quieras.':'¿Cómo va el tuyo?'}</p>${ctx.btn(mood?'Editar mi mood':'Registrar mi mood','mood-open',`data-date="${escape(ctx,date)}"`,'secondary')}</div><div class="mood-banner-faces">${typeof ctx?.img==='function'?ctx.img('mood-feliz'):''}${typeof ctx?.img==='function'?ctx.img('mood-calma'):''}${typeof ctx?.img==='function'?ctx.img('mood-neutral'):''}</div></section><div class="section-head"><h2>Lo que cuido de mí</h2><label class="inline-date">${icon(ctx,'calendar-days')}<input aria-label="Fecha de hábitos" type="date" value="${escape(ctx,date)}" data-change="habit-date"></label></div>${list.length?`<div class="habit-list" data-week-start="${escape(ctx,week)}">${list.map(habit=>renderHabitRow(ctx,habit,date)).join('')}</div>`:ctx.empty('Tu primer hábito empieza aquí.','Leer un rato, tomar agua o salir a caminar. Elige algo para ti y cuándo quieres hacerlo.',ctx.btn('Crear mi primer hábito','habit-new'))}<section class="panel mood-history"><div class="section-head"><h2>Mis días, a mi manera</h2><span class="small muted">Registro personal</span></div>${moodHistory.length?moodHistory.map(item=>`<button class="list-row mood-record" data-action="mood-open" data-date="${escape(ctx,item.date)}">${typeof ctx?.img==='function'?ctx.img('mood-'+item.mood):''}<span><strong>${escape(ctx,typeof ctx?.prettyDate==='function'?ctx.prettyDate(item.date):item.date)}</strong><span class="muted small">${escape(ctx,item.note||MOODS.find(moodItem=>moodItem.id===item.mood)?.name||'')}</span></span>${icon(ctx,'chevron-right')}</button>`).join(''):'<p class="muted">Tu primer mood guardado aparecerá aquí y en Calendario.</p>'}</section>`;
+  const today=safeDate(ctx,todayOf(ctx));
+  const moodTitle=mood?(date===today?`Hoy estoy ${escape(ctx,moodName)}`:date<today?`Ese día me sentí ${escape(ctx,moodName)}`:`Estado registrado: ${escape(ctx,moodName)}`):'Estado de ánimo';
+  const moodNote=mood?.note?`<p class="mood-note">${escape(ctx,mood.note)}</p>`:'';
+  const moodVisual=mood?`<div class="mood-selected-face" aria-label="Estado de ánimo registrado: ${escape(ctx,moodName)}">${moodSprite(ctx,mood.mood)}</div>`:`<div class="mood-banner-faces">${['feliz','calma','neutral'].map(id=>moodSprite(ctx,id)).join('')}</div>`;
+  const moodInvitation=mood?'':`<p>No todos los días se sienten igual. ¿Cómo va el tuyo?</p>`;
+  const dateControl=`<label class="inline-date habit-date-control"><span class="habit-date-label small">Fecha · Hábitos y estado de ánimo</span>${icon(ctx,'calendar-days')}<input aria-label="Fecha de hábitos y estado de ánimo" type="date" value="${escape(ctx,date)}" data-change="habit-date"></label>`;
+  return `<div class="page-heading habit-page-heading"><div><span class="eyebrow">PEQUEÑOS PASOS, A TU RITMO</span><h1>Mis hábitos</h1></div>${dateControl}</div><section class="mood-banner"><div class="mood-banner-copy"><span class="eyebrow">ESTADO DE ÁNIMO</span><h2>${moodTitle}</h2>${moodNote}${moodInvitation}${ctx.btn(mood?'Editar estado de ánimo':'Registrar estado de ánimo','mood-open',`data-date="${escape(ctx,date)}" data-mood-context="habits"`,'secondary')}</div>${moodVisual}</section><div class="section-head habit-section-head"><div class="habit-section-title"><h2>Lo que cuido de mí</h2>${ctx.btn('Crear hábito','habit-new','','primary')}</div></div>${list.length?`<div class="habit-list" data-week-start="${escape(ctx,week)}">${list.map(habit=>renderHabitRow(ctx,habit,date)).join('')}</div>`:ctx.empty('Tu primer hábito empieza aquí.','Leer un rato, tomar agua o salir a caminar. Elige algo para ti y cuándo quieres hacerlo.',ctx.btn('Crear mi primer hábito','habit-new'))}`;
 }
 
 export function registerHabits(ctx) {
@@ -475,10 +493,10 @@ export function registerHabits(ctx) {
   ctx.action('habit-detail',data=>openHabitDetails(ctx,data.id,data.date||ctx.view.habitDate||todayOf(ctx)));
   ctx.action('habit-detail-edit',data=>openHabit(ctx,data.id));
   ctx.action('habit-toggle',data=>toggleHabit(ctx,data.id,data.date));
-  ctx.action('habit-day',data=>{ctx.view.habitDate=data.date;ctx.render();});
-  ctx.change('habit-date',(data,event,element)=>{if(element.value){ctx.view.habitDate=element.value;ctx.render();}});
+  ctx.action('habit-day',data=>{if(validDate(data.date))ctx.view.habitDate=data.date;else ctx.view.habitDate=selectedHabitDate(ctx);ctx.render();});
+  ctx.change('habit-date',(data,event,element)=>{ctx.view.habitDate=validDate(element?.value)?element.value:selectedHabitDate(ctx);ctx.render();});
   ctx.change('habit-frequency',(data,event,element)=>syncHabitForm(ctx,element.form));
   ctx.change('habit-type',(data,event,element)=>syncHabitForm(ctx,element.form));
   ctx.change('habit-monthly-date',(data,event,element)=>syncHabitForm(ctx,element.form));
-  ctx.action('mood-open',data=>openMood(ctx,data.date));
+  ctx.action('mood-open',data=>openMood(ctx,moodActionDate(ctx,data)));
 }

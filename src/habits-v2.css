@@ -489,3 +489,269 @@
 .habit-icon-option { width:44px; height:44px; }
 .habit-icon-radio { position:absolute; inset:0; width:100%; height:100%; opacity:0; clip:auto; margin:0; cursor:pointer; }
 @media(max-width:600px) { .habit-row { min-height:58px; } .habit-row-main strong { font-size:13px; } }
+
+/* Pulido de Hábitos: fecha común, banner sin solapes y caritas con mezcla normal. */
+.habit-page-heading {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.habit-page-heading > div:first-child {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.habit-date-control {
+  flex: 0 1 auto;
+  max-width: 100%;
+  min-width: 0;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.habit-date-control .habit-date-label {
+  color: #637079;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.habit-date-control > svg {
+  width: 18px;
+  height: 18px;
+  color: var(--strong);
+}
+
+.habit-date-control input {
+  width: 145px;
+  max-width: 100%;
+  border: 1px solid #dae4e0;
+  border-radius: 10px;
+  background: #fff;
+  padding: 8px;
+}
+
+.habit-section-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  min-width: 0;
+}
+
+.habit-section-title h2 {
+  margin: 0;
+}
+
+.mood-banner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(12px, 3vw, 32px);
+  min-width: 0;
+  overflow: visible;
+}
+
+.mood-banner-copy {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mood-banner-copy h2,
+.mood-banner-copy p {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mood-banner-copy h2 {
+  margin-bottom: 10px;
+}
+
+.mood-banner-copy .mood-note {
+  margin-top: 8px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.mood-banner-copy .btn {
+  max-width: 100%;
+}
+
+.mood-banner-faces,
+.mood-selected-face {
+  position: static;
+  transform: none !important;
+  min-width: 0;
+  overflow: visible;
+}
+
+.mood-banner-faces {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: clamp(150px, 22vw, 255px);
+  gap: clamp(2px, 0.8vw, 9px);
+}
+
+.mood-selected-face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(90px, 13vw, 128px);
+  min-width: clamp(90px, 13vw, 128px);
+}
+
+.mood-banner-faces .mood-sprite,
+.mood-selected-face .mood-sprite {
+  position: static;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  transform: none;
+}
+
+.mood-banner-faces .mood-sprite {
+  flex: 1 1 0;
+}
+
+.mood-banner-faces img,
+.mood-selected-face img,
+.mood-option img {
+  mix-blend-mode: normal !important;
+  background: transparent !important;
+  filter: none !important;
+  opacity: 1 !important;
+  border-radius: 0 !important;
+}
+
+.mood-banner-faces img,
+.mood-banner-faces img:nth-child(2),
+.mood-banner-faces img:nth-child(3),
+.mood-banner-faces .mood-sprite:nth-child(2) img,
+.mood-banner-faces .mood-sprite:nth-child(3) img {
+  position: static !important;
+  width: clamp(44px, 5.5vw, 76px);
+  height: auto;
+  margin: 0 !important;
+  transform: none !important;
+}
+
+.mood-selected-face img {
+  position: static !important;
+  width: clamp(90px, 13vw, 128px);
+  height: auto;
+  margin: 0 !important;
+  transform: none !important;
+}
+
+.mood-option img {
+  position: static !important;
+  width: 76px;
+  height: 72px;
+  margin: 0;
+  object-fit: contain;
+}
+
+@keyframes mood-face-float {
+  0% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-4px) rotate(-1deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+
+@keyframes mood-face-pop {
+  0% { opacity: 0; transform: scale(.88); }
+  70% { opacity: 1; transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes mood-option-enter {
+  0% { opacity: .4; transform: translateY(3px) scale(.97); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.mood-banner-faces .mood-sprite {
+  animation: mood-face-float 4s ease-in-out 1 both;
+}
+
+.mood-banner-faces .mood-sprite:nth-child(2) {
+  animation-delay: .15s;
+}
+
+.mood-banner-faces .mood-sprite:nth-child(3) {
+  animation-delay: .3s;
+}
+
+.mood-selected-face .mood-sprite {
+  animation: mood-face-pop .2s ease-out 1 both;
+}
+
+.mood-optionimg-animation {
+  animation: mood-option-enter .4s ease-out 1 both;
+}
+
+.mood-option:hover .mood-optionimg-animation {
+  transform: translateY(-2px);
+}
+
+@media (min-width: 320px) and (max-width: 1440px) {
+  .habit-page-heading {
+    flex-wrap: wrap;
+  }
+
+  .habit-date-control {
+    flex: 1 1 320px;
+  }
+}
+
+@media (max-width: 600px) {
+  .habit-date-control {
+    width: 100%;
+    flex-basis: 100%;
+    justify-content: flex-start;
+  }
+
+  .habit-date-control > svg {
+    display: inline-flex !important;
+  }
+
+  .habit-date-control input {
+    width: 135px;
+  }
+
+  .mood-banner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  .mood-banner-faces {
+    width: clamp(145px, 44vw, 190px);
+  }
+
+  .mood-banner-faces img,
+  .mood-banner-faces img:nth-child(2),
+  .mood-banner-faces img:nth-child(3),
+  .mood-banner-faces .mood-sprite:nth-child(2) img,
+  .mood-banner-faces .mood-sprite:nth-child(3) img {
+    width: clamp(42px, 15vw, 58px);
+  }
+
+  .mood-selected-face {
+    width: clamp(90px, 27vw, 112px);
+    min-width: clamp(90px, 27vw, 112px);
+  }
+
+  .mood-selected-face img {
+    width: clamp(90px, 27vw, 112px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mood-banner *,
+  .mood-option,
+  .mood-optionimg-animation {
+    animation: none !important;
+    transition: none !important;
+  }
+}

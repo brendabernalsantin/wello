@@ -14,7 +14,7 @@ if(mode==='pages'){
   config={mode:'production',url,key};
 }
 const names={dog:'dog.png',gym:'gym.png',food:'icons8-comida-sana-96.png',cooking:'icons8-freír-96.png',meditation:'meditation-transparent.png',fitness:'fitness.jpg',seed:'seed.png'};
-for(const m of ['feliz','calma','neutral','cansada','triste','estresada'])names['mood-'+m]='mood-'+m+'.png';
+for(const m of ['feliz','calma','neutral','cansada','triste','estresada'])names['mood-'+m]='mood-'+m+'-transparent.png';
 const assets={};for(const [name,file] of Object.entries(names)){const bytes=await fs.readFile('assets/'+file);assets[name]=`data:image/${file.endsWith('.jpg')?'jpeg':'png'};base64,${bytes.toString('base64')}`;}
 const app=await build({entryPoints:['src/app.js'],bundle:true,format:'iife',write:false,minify:false,target:['es2022'],logLevel:'warning'});
 const requiredAccess=config.mode==='production';

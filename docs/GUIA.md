@@ -12,7 +12,7 @@ Abre **Gym**, elige fecha y una de las cuatro rutinas. Cada fila indica el objet
 
 Puedes tocar **Terminar sesión** aunque queden ejercicios pendientes. No se marcan automáticamente. La pestaña **Evolución** representa la mayor carga de una serie realizada por fecha, y **Historial** conserva las series y sus marcas. En ejercicios asistidos, menos asistencia puede representar progreso. Selecciona la referencia de cada carga (peso total, discos, máquina, reportado o asistencia). En Evolución, elige la misma referencia para no mezclar valores incompatibles. Las observaciones históricas verificadas aparecen etiquetadas al seleccionar su referencia; no se convierten en series realizadas.
 
-## Hábitos y mood
+## Hábitos y estado de ánimo
 
 Crea un hábito con nombre, icono visible y muestra de color. Elige **Para mí** o **Para mi hogar**. En Mis hábitos cada fila muestra el icono, el nombre y el check; al tocar el nombre se abre el detalle con frecuencia, semana, metas y edición. No necesitas abrir el detalle para marcar un hábito simple. En días no programados, el check no se activa; los registros antiguos fuera de programación se conservan y pueden corregirse.
 
@@ -22,7 +22,9 @@ Los campos de meta y unidad aparecen sólo con **Registrar una cantidad**. Las m
 
 Para agua u otras cantidades, captura el total de ese día. Una nueva edición reemplaza esa cantidad, no la suma dos veces. Una meta semanal suma los registros de su semana. En Inicio, el check de un hábito con cantidad abre la captura: no inventa un volumen ni da crédito por estar programado.
 
-En **Mi mood de hoy**, selecciona una fecha, una de las seis caritas y una nota opcional. Guardar de nuevo para la misma fecha actualiza el registro. Puedes encontrarlo en Hábitos y en Calendario con el filtro Hábitos; al abrirlo desde ahí se edita la fecha original.
+El selector de fecha está arriba y afecta a **Hábitos y estado de ánimo**. **Crear hábito** queda junto a **Lo que cuido de mí**. En el recuadro rosa, usa **Registrar estado de ánimo** para elegir una de las seis caritas y una nota opcional. Después de guardar, el recuadro muestra la emoción, su carita y tu nota; **Editar estado de ánimo** actualiza el registro de esa fecha. El título dice «Hoy estoy…» sólo para hoy. Las caritas tienen fondo transparente y una animación breve que se desactiva si tu dispositivo solicita reducir movimiento.
+
+La página de Hábitos no muestra una lista de historial emocional debajo. Los registros anteriores no se eliminan: se consultan y editan en **Calendario**, con el filtro **Hábitos**, abriendo el evento de **Estado de ánimo** de la fecha original. Guardar de nuevo para la misma fecha actualiza el registro, sin duplicarlo.
 
 ## Mascotas
 

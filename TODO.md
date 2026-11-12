@@ -227,3 +227,13 @@ Autorización posterior: «aquí ya haz los cambios». Inicio implementado y val
 ### Inicio · fondo de ilustración, corrección autorizada a las 13:59
 
 - [x] Quitar el fondo blanco real de la imagen de la chica meditando mediante un PNG transparente, sin cuadro, borde ni fondo simulado. Conservar la misma ilustración completa y sus colores; mostrarla directamente sobre el fondo menta sin mezcla multiply, filtro ni opacidad que la vuelvan verdosa. Integrar la transparencia en la web publicada y en el HTML local, comprobarla y publicar sólo esta corrección; los demás espacios siguen pendientes.
+
+## Hábitos · revisión autorizada el 12 noviembre, 14:16
+
+- [x] Retirar «Un espacio para lo que te hace bien.» y «Te sientes feliz. Puedes cambiarlo cuando quieras.» y sus variantes de emoción. Usar «estado de ánimo» en los textos de interfaz, manteniendo IDs y registros internos sin migración destructiva.
+- [x] Las seis imágenes de estados de ánimo deben tener transparencia real, sin fondo blanco ni tinte del fondo. Conservar sus expresiones, estilo y colores.
+- [x] Tras registrar un estado de ánimo, mostrarlo dentro del recuadro rosa en lugar de las tres caritas: encabezado «Hoy estoy feliz» según la emoción, la carita correspondiente y la nota que antes aparecía debajo. Sin registro, mantener invitación para registrar y las caritas. Con otra fecha seleccionada, no llamar «hoy» a ese registro. Nota escapada, multilínea y legible.
+- [x] Quitar de la página de Hábitos la lista/historial inferior de estados de ánimo. Conservar todos los registros y su acceso/edición desde Calendario; no borrar historial ni alterar las frecuencias o metas de los hábitos.
+- [x] Mover el selector de fecha con el icono de calendario a la parte superior, indicando que afecta a Hábitos y estado de ánimo. Mover el botón Crear hábito junto a «Lo que cuido de mí», intercambiando las posiciones anteriores. Cambiar fecha y guardar un estado de ánimo mantiene la fecha común consistente.
+- [x] Añadir animación sutil a las caritas, sin parpadeo ni movimiento intenso, y detenerla con prefers-reduced-motion. Conservar accesibilidad de controles y diseño adaptable.
+- [ ] Verificar guardado, edición, recarga, fechas y presentación; publicar la sección de Hábitos sin implementar los cambios pendientes de Mascotas ni la lógica pendiente de Calendario.

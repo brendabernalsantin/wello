@@ -47,3 +47,11 @@ Hábitos, Gym, Mascotas y Citas personales deben mantener coherencia entre filtr
 ## Forma de trabajar
 
 Recopilar primero las observaciones de cada espacio, devolver un resumen claro de lo entendido y resolver las decisiones de esa sección antes de implementarla. No mezclar todos los ajustes en una revisión global ni dar por cerrada una sección sin revisarla con la usuaria. Las siguientes observaciones se incorporarán a este documento, conservando separado lo pendiente de lo implementado.
+
+## Hábitos · revisión autorizada a las 14:16
+
+Estado: implementado y validado; pendiente de confirmación de publicación. Retirar «Un espacio para lo que te hace bien.» y el mensaje «Te sientes feliz. Puedes cambiarlo cuando quieras.» con sus variantes; usar «estado de ánimo» en la interfaz. Las seis caritas tendrán transparencia real conservando su expresión y estilo, y una animación breve y suave que respete reducir movimiento.
+
+El recuadro rosa mostrará el estado registrado para la fecha elegida: «Hoy estoy feliz» o la emoción correspondiente, una carita y la nota guardada, en lugar de las tres caritas iniciales. Para otra fecha no se afirmará que es hoy. Sin registro se conservará la invitación a registrar. No habrá lista inferior de historial emocional en Hábitos: los registros se conservan y se consultan/editarán desde Calendario.
+
+El selector de fecha con icono de calendario se mueve arriba y se identifica como común para Hábitos y estado de ánimo. Crear hábito se coloca junto a Lo que cuido de mí, intercambiando las posiciones anteriores. Esta actualización no implementa todavía la reutilización de trucos de Mascotas ni los cambios de cumplimiento y colores de Calendario. En Calendario únicamente se unifica el nombre visible «estado de ánimo» para conservar una terminología coherente.
