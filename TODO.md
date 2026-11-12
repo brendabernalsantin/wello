@@ -236,4 +236,4 @@ Autorización posterior: «aquí ya haz los cambios». Inicio implementado y val
 - [x] Quitar de la página de Hábitos la lista/historial inferior de estados de ánimo. Conservar todos los registros y su acceso/edición desde Calendario; no borrar historial ni alterar las frecuencias o metas de los hábitos.
 - [x] Mover el selector de fecha con el icono de calendario a la parte superior, indicando que afecta a Hábitos y estado de ánimo. Mover el botón Crear hábito junto a «Lo que cuido de mí», intercambiando las posiciones anteriores. Cambiar fecha y guardar un estado de ánimo mantiene la fecha común consistente.
 - [x] Añadir animación sutil a las caritas, sin parpadeo ni movimiento intenso, y detenerla con prefers-reduced-motion. Conservar accesibilidad de controles y diseño adaptable.
-- [ ] Verificar guardado, edición, recarga, fechas y presentación; publicar la sección de Hábitos sin implementar los cambios pendientes de Mascotas ni la lógica pendiente de Calendario.
+- [x] Verificar guardado, edición, recarga, fechas y presentación; publicar la sección de Hábitos sin implementar los cambios pendientes de Mascotas ni la lógica pendiente de Calendario.
