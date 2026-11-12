@@ -226,4 +226,4 @@ Autorización posterior: «aquí ya haz los cambios». Inicio implementado y val
 
 ### Inicio · fondo de ilustración, corrección autorizada a las 13:59
 
-- [ ] Quitar el fondo blanco real de la imagen de la chica meditando mediante un PNG transparente, sin cuadro, borde ni fondo simulado. Conservar la misma ilustración completa y sus colores; mostrarla directamente sobre el fondo menta sin mezcla multiply, filtro ni opacidad que la vuelvan verdosa. Integrar la transparencia en la web publicada y en el HTML local, comprobarla y publicar sólo esta corrección; los demás espacios siguen pendientes.
+- [x] Quitar el fondo blanco real de la imagen de la chica meditando mediante un PNG transparente, sin cuadro, borde ni fondo simulado. Conservar la misma ilustración completa y sus colores; mostrarla directamente sobre el fondo menta sin mezcla multiply, filtro ni opacidad que la vuelvan verdosa. Integrar la transparencia en la web publicada y en el HTML local, comprobarla y publicar sólo esta corrección; los demás espacios siguen pendientes.
