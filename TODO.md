@@ -223,3 +223,7 @@ Estado: Mascotas y Calendario siguen en anotación y revisión previa. Inicio s�
 - [x] Al marcar un hábito como realizado, enviarlo al final de la lista y subir los pendientes. Ordenar primero pendientes y luego realizados antes de mostrar los cuatro, para que los siguientes sin completar vayan apareciendo. No borrar hábitos ni registros de cumplimiento.
 
 Autorización posterior: «aquí ya haz los cambios». Inicio implementado y validado con 6 grupos UI y 5 pruebas nuevas de lógica; Mascotas y Calendario siguen pendientes.
+
+### Inicio · fondo de ilustración, corrección autorizada a las 13:59
+
+- [ ] Quitar el fondo blanco real de la imagen de la chica meditando mediante un PNG transparente, sin cuadro, borde ni fondo simulado. Conservar la misma ilustración completa y sus colores; mostrarla directamente sobre el fondo menta sin mezcla multiply, filtro ni opacidad que la vuelvan verdosa. Integrar la transparencia en la web publicada y en el HTML local, comprobarla y publicar sólo esta corrección; los demás espacios siguen pendientes.

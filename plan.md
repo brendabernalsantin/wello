@@ -36,3 +36,7 @@ La propietaria confirmó el acceso real Google mediante captura y solicita que l
 ## Pulido de Inicio autorizado · 12 noviembre 2026, 13:49
 
 La usuaria cambia la recopilación por implementación inmediata sólo para Inicio: retirar los cinco textos indicados, corregir el tono verdoso de la ilustración existente sin reemplazarla, mostrar hasta cuatro hábitos y un acceso inferior a todos, y priorizar pendientes sobre realizados antes de limitar la vista. Reutilizar los mismos checks/cantidades y registros. Mascotas/trucos y Calendario/cumplimiento/colores permanecen únicamente como pendientes de revisión y no se implementan en esta actualización. El bloqueo Google de la versión publicada se conserva.
+
+## Corrección puntual de Inicio · transparencia de ilustración
+
+La usuaria rechaza el rectángulo blanco del JPEG. Editar la ilustración existente para quitar sólo el fondo y generar un PNG con alpha real; conservar sujeto, encuadre y colores. Cambiar el asset meditation del build, quitar el radio de tarjeta y mantener mezcla normal, filtro none y opacidad completa para integrarla directamente en el fondo menta. Verificar el canal alpha y la apariencia final, sin alterar hábitos, autenticación, Mascotas ni Calendario.

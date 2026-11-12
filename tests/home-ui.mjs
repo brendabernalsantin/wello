@@ -8,7 +8,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TARGET = pathToFileURL(path.join(ROOT, 'entregables', 'Wello.html')).href;
 const ARTIFACT = path.join(ROOT, 'artifacts', 'home-ui-results.json');
 const WIDTHS = [320, 390, 768, 1440];
-const MEDITATION_DATA_URL = `data:image/jpeg;base64,${(await fs.readFile(path.join(ROOT, 'assets', 'meditation.jpg'))).toString('base64')}`;
+const MEDITATION_BYTES = await fs.readFile(path.join(ROOT, 'assets', 'meditation-transparent.png'));
+const MEDITATION_DATA_URL = `data:image/png;base64,${MEDITATION_BYTES.toString('base64')}`;
+const MEDITATION_WIDTH = MEDITATION_BYTES.readUInt32BE(16);
+const MEDITATION_HEIGHT = MEDITATION_BYTES.readUInt32BE(20);
 
 const browser = await chromium.launch({
   executablePath: '/usr/bin/chromium',
@@ -166,13 +169,17 @@ try {
     assert(lastRowBox && viewAllBox && viewAllBox.y >= lastRowBox.y + lastRowBox.height - 1, 'El enlace de hábitos debe quedar debajo de la lista.');
   });
 
-  await check('Asset de bienvenida mantiene JPG 450 y CSS solicitado en todos los anchos', async () => {
+  await check('Ilustración PNG transparente sin fondo ni mezcla en todos los anchos', async () => {
     for (const width of WIDTHS) {
       await page.setViewportSize({ width, height: 900 });
       const metrics = await page.evaluate(() => {
         const image = document.querySelector('.welcome-art img');
         const imageStyle = getComputedStyle(image);
         const artStyle = getComputedStyle(image.parentElement);
+        const canvas = document.createElement('canvas');
+        canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+        const context = canvas.getContext('2d'); context.drawImage(image, 0, 0);
+        const alpha = (x, y) => context.getImageData(x, y, 1, 1).data[3];
         return {
           innerWidth,
           documentWidth: document.documentElement.scrollWidth,
@@ -184,16 +191,22 @@ try {
           filter: imageStyle.filter,
           borderRadius: imageStyle.borderRadius,
           artOpacity: artStyle.opacity,
+          backgroundColor: imageStyle.backgroundColor,
+          cornerAlpha: [alpha(0, 0), alpha(canvas.width-1, 0), alpha(0, canvas.height-1), alpha(canvas.width-1, canvas.height-1)],
+          centerAlpha: alpha(Math.floor(canvas.width/2), Math.floor(canvas.height/2)),
         };
       });
       assert(metrics.documentWidth <= metrics.innerWidth, `overflow document en ${width}px: ${JSON.stringify(metrics)}`);
       assert(metrics.bodyWidth <= metrics.innerWidth, `overflow body en ${width}px: ${JSON.stringify(metrics)}`);
       assert.equal(metrics.source, MEDITATION_DATA_URL);
-      assert.equal(metrics.naturalWidth, 450);
-      assert.equal(metrics.naturalHeight, 450);
+      assert.equal(metrics.naturalWidth, MEDITATION_WIDTH);
+      assert.equal(metrics.naturalHeight, MEDITATION_HEIGHT);
       assert.equal(metrics.mixBlendMode, 'normal');
       assert.equal(metrics.filter, 'none');
-      assert.equal(metrics.borderRadius, '22px');
+      assert.equal(metrics.borderRadius, '0px');
+      assert.equal(metrics.backgroundColor, 'rgba(0, 0, 0, 0)');
+      assert(metrics.cornerAlpha.every(alpha => alpha <= 2), 'Las esquinas deben ser transparentes, no un fondo opaco.');
+      assert(metrics.centerAlpha >= 250, 'El sujeto debe conservar su opacidad.');
       assert.equal(metrics.artOpacity, '1');
     }
     await page.setViewportSize({ width: 1440, height: 900 });
