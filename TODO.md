@@ -204,4 +204,4 @@ Cada fila es una entrada independiente dentro de su rutina, aunque el nombre apa
 - [x] La versión production muestra únicamente acceso con Google antes de iniciar sesión, sin destello de la app, navegación o formularios accesibles. Comprobar sesión mantiene el acceso bloqueado.
 - [x] Sin sesión no hay entrada a modo local, ni por botón ni por método del cliente; errores de acceso conservan bloqueo. Cerrar sesión, perderla o cambiar de cuenta oculta la app y cierra diálogos inmediatamente. Tras entrar con Google se habilitan los módulos para la cuenta correspondiente.
 - [x] NFC e invitaciones conservan sus destinos a través de Google; el HTML descargable local y las copias privadas existentes no se eliminan ni modifican.
-- [ ] Pruebas de bloqueo, acceso autenticado simulado, cierre, errores y rutas directas. Publicar y verificar el artefacto actualizado en Pages sin modificar permisos RLS ni credenciales.
+- [x] Pruebas de bloqueo, acceso autenticado simulado, cierre, errores y rutas directas. Publicar y verificar el artefacto actualizado en Pages sin modificar permisos RLS ni credenciales.
