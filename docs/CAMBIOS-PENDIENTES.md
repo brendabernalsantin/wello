@@ -2,7 +2,7 @@
 
 Fecha: 12 de noviembre de 2026.
 
-**Estado: Inicio implementado y validado; Mascotas y Calendario pendientes de revisión e implementación.** La usuaria indicó después «aquí ya haz los cambios» para Inicio. Sólo se aplicaron esos ajustes: textos retirados, imagen original sin mezcla con el fondo ni filtro, cuatro hábitos con pendientes primero y botón inferior a todos. Se comprobó la recarga, el guardado y las cantidades parciales. Se publicará esta sección sin implementar los demás pendientes. Seguiremos revisando cada espacio antes de aplicar sus ajustes y añadiendo las observaciones que envíe.
+**Estado: Inicio implementado, validado y publicado; Mascotas y Calendario pendientes de revisión e implementación.** La usuaria indicó después «aquí ya haz los cambios» para Inicio. Sólo se aplicaron esos ajustes: textos retirados, imagen original sin mezcla con el fondo ni filtro, cuatro hábitos con pendientes primero y botón inferior a todos. Se comprobó la recarga, el guardado y las cantidades parciales. Esta sección ya está publicada en GitHub Pages, sin implementar los demás pendientes. Seguiremos revisando cada espacio antes de aplicar sus ajustes y añadiendo las observaciones que envíe.
 
 ## Inicio · textos
 
