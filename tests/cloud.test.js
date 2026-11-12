@@ -213,7 +213,10 @@ test('un conflicto conserva la revisión CAS confiable para el siguiente intento
     return builder;
   };
   const client = {
-    auth: { getSession: async () => ({ data: { session: { access_token: 'access-token-user-a', user: { id: userId } } }, error: null }) },
+    auth: {
+      getSession: async () => ({ data: { session: { access_token: 'access-token-user-a', user: { id: userId } } }, error: null }),
+      getUser: async (accessToken) => ({ data: { user: { id: userId, email: 'a@example.test', access_token: accessToken } }, error: null }),
+    },
     from(table) {
       if (table === 'private_records') return queryBuilder([remote]);
       if (table === 'household_members') return queryBuilder([]);
@@ -222,7 +225,12 @@ test('un conflicto conserva la revisión CAS confiable para el siguiente intento
   };
   client._boundRpc = () => Promise.resolve({ data: null, error: { code: 'WELLO_REVISION_CONFLICT', message: 'revision conflict' } });
   const controller = new WelloCloudController({
-    app: { getState() { return { version: 3, personal: { moods: [{ id: 'local' }] }, households: [] }; } },
+    app: {
+      namespace: 'local',
+      getState() { return { version: 3, personal: { moods: [{ id: 'local' }] }, households: [] }; },
+      getNamespace() { return this.namespace; },
+      async switchNamespace(namespace) { this.namespace = namespace; },
+    },
     localStorage,
     configResult: { ok: true, config: { url: 'https://project.supabase.co', key: 'sb_publishable_test', mode: 'production' }, message: 'ok' },
     createClient() { return { rpc: (...args) => client._boundRpc(...args) }; },

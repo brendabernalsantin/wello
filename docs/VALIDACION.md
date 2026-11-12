@@ -78,3 +78,15 @@ El manifiesto actualizado contiene 11 rutas y se comprobó GET /manus-routes.jso
 ### Resultado posterior a las correcciones de colaboración
 
 `npm test` final pasó **92/92** y `npm run check` pasó. Se añadieron regresiones para el JWT de la cuenta que inició la escritura, guards de generación/namespace, bootstrap personal conservado, baseline tras aceptar una invitación, revocación sin resucitar hogares y nombres canónicos. La creación conserva el operation ID para reintentar una respuesta perdida. La UI confirmó importación con confirm=true y protege los diálogos de respuestas de sesiones anteriores. Se regeneraron HTML local y build production. Esto no sustituye la validación pendiente de OAuth Google y de dos familiares reales.
+
+## Acceso obligatorio a la web · 12 de noviembre de 2026
+
+La propietaria configuró Google OAuth y las URLs de regreso mediante los paneles oficiales. Supabase Auth respondió HTTP200 con Google habilitado y la autorización HTTP302 abrió accounts.google.com con callback correcto y sólo email/profile. La propietaria envió captura de Cuenta conectada tras completar Google en la web. Es evidencia de su acceso real, no de una colaboración ya comprobada entre familiares.
+
+La versión production arranca bloqueada desde el HTML y CSS inicial: sólo presenta acceso, sin navegación, formularios ni entrada local. Valida la sesión con `auth.getUser` antes de preparar el namespace y habilitar los módulos. Los errores conservan el bloqueo. Cerrar sesión cambia la vista y vacía el espacio de cuenta antes de esperar la red; los formularios se cierran y los registros persistidos se conservan. El modo local sigue disponible sólo en el HTML independiente y la variante de desarrollo preview.
+
+`npm run check` y `npm test` pasaron: **102/102 pruebas de lógica**. Incluyen cierre durante una validación pendiente, callback de cuenta B frente a una respuesta A y INITIAL_SESSION no nulo obsoleto; no pueden volver a mostrar la cuenta anterior. La revisión independiente detectó estas carreras y se añadieron regresiones a la corrección.
+
+`node tests/auth-access-ui.mjs` pasó **8/8 grupos** con el SDK real en Chromium y endpoints Auth/REST/RPC interceptados: bloqueo antes de JavaScript, hashes directos, ausencia de local/close como bypass, ancho 320/390/768/1440 sin overflow, getUser demorado, sesiones rechazadas o servicio fallido, error de Google y cierre con red demorada conservando exactamente la copia de registros de cuenta. Ninguna prueba inició una cuenta Google real ni escribió en Supabase. `npm run test:ui` volvió a pasar **12/12 flujos** del HTML local, con 30 combinaciones de ancho/ruta y recarga offline.
+
+Se regeneraron HTML local y production. La vista previa sirve la misma variante production y el manifiesto JSON HTTP200. La publicación de esta revisión se realiza sobre gh-pages y se confirma comparando los bytes servidos por GitHub Pages con el artefacto, no sólo por el push. Siguen pendientes la colaboración con dos familiares reales y los dispositivos Apple/NFC físicos. El código de la web sigue siendo público; los datos remotos siguen protegidos por RLS, no por el bloqueo visual.

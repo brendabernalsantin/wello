@@ -4,7 +4,7 @@
 
 Descarga `Wello.html`, guárdalo en una carpeta y ábrelo con Chrome en tu computadora. No necesitas instalar nada, crear una cuenta ni tener conexión. El archivo contiene sus imágenes y su código. Conserva la misma ubicación y navegador para tus registros: el almacenamiento de archivos locales depende de Chrome y de su configuración.
 
-En el teléfono, la vía recomendada es abrir la versión HTTPS una vez publicada. La interfaz se verificó automáticamente en anchos de 320, 390, 768, 1024 y 1440 px; eso no equivale a una prueba en un iPhone físico.
+En el teléfono, abre https://brendabernalsantin.github.io/wello/ . La versión publicada exige iniciar sesión con Google antes de mostrar los módulos; no tiene entrada en modo local. El HTML descargable es una versión separada. La interfaz se verificó automáticamente en anchos de 320, 390, 768, 1024 y 1440 px; eso no equivale a una prueba en un iPhone físico.
 
 ## Gym
 
@@ -26,7 +26,7 @@ En **Mi mood de hoy**, selecciona una fecha, una de las seis caritas y una nota 
 
 ## Mascotas
 
-Crea un perfil por mascota con nombre, tipo, cumpleaños y sexo. Puedes agregar una foto JPEG, PNG o WebP, previsualizarla, cambiarla o quitarla al editar el perfil. Se reduce proporcionalmente y se guarda dentro de los datos locales, sin publicar el archivo ni enviar la foto a un servicio externo. Si la imagen no se puede leer o es demasiado grande, se pide otra; HEIC necesita convertirse primero. La foto también forma parte de tus copias privadas.
+Crea un perfil por mascota con nombre, tipo, cumpleaños y sexo. Puedes agregar una foto JPEG, PNG o WebP, previsualizarla, cambiarla o quitarla al editar el perfil. Se reduce proporcionalmente y se guarda dentro de los datos: en el HTML independiente queda local; en un hogar compartido online se sincroniza de forma privada en Supabase para los miembros, sin subirse al repositorio público. Si la imagen no se puede leer o es demasiado grande, se pide otra; HEIC necesita convertirse primero. La foto también forma parte de tus copias privadas.
 
 **Agregar actividad** abre un menú de categorías con iconos. Después de elegir vacuna, paseo, entrenamiento, alimentación o baño, sólo se muestran los campos de esa actividad; ya no hay un formulario con campos de todas las categorías a la vez. Los medicamentos aparecen al activar **Necesita cuidados**. Desactivar cuidados conserva las administraciones y permite editar el historial.
 
@@ -64,4 +64,8 @@ En Mis datos, **Probar el acceso directo** abre Agregar al súper una vez. Para 
 
 ## En línea
 
-La carpeta `dist/` entregada es una vista previa estática: el botón Google está deshabilitado porque no hay servicios configurados. Puedes elegir modo local. La configuración de producción, Google, Supabase y los hogares compartidos se prepara con las instrucciones de `DESPLIEGUE.md` y `SUPABASE.md`. No se ha publicado el sitio ni se ha verificado un acceso real.
+El sitio de GitHub Pages está publicado con Supabase y Google configurados. La propietaria confirmó un acceso real el 12 de noviembre. Antes de entrar, la web muestra sólo la pantalla de acceso; al cerrar sesión o perderla vuelve a esa pantalla y cierra los formularios abiertos. El código estático permanece público; los datos remotos se protegen mediante permisos de cuenta y membresía en Supabase, no sólo por ocultar la interfaz.
+
+La sincronización sube los datos personales a la cuenta y los hogares compartidos a sus miembros. Una casa que aún no compartes permanece local dentro de la copia de tu cuenta en este navegador. Para usarla con tu familia, entra en Mis hogares, comparte o crea un hogar, invita por correo y envía el enlace en privado. Cada persona entra con su propia cuenta. Falta comprobar el flujo familiar con dos cuentas reales; la captura de cuenta conectada no demuestra por sí sola una sincronización familiar completa.
+
+Las variantes de desarrollo `build:preview` y el HTML descargable conservan sus flujos locales. La configuración y pruebas están documentadas en `DESPLIEGUE.md`, `SUPABASE.md` y `VALIDACION.md`.

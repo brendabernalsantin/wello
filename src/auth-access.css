@@ -1,0 +1,162 @@
+/* Wello · acceso autenticado. Todos los selectores viven bajo la pantalla bloqueada. */
+.wello-access-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  padding: clamp(24px, 6vw, 72px);
+  color: #283541;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(72, 207, 173, .18), transparent 32%),
+    radial-gradient(circle at 90% 88%, rgba(180, 165, 231, .2), transparent 34%),
+    #f8fbfa;
+  font-family: inherit;
+}
+
+.wello-access-card {
+  width: min(100%, 460px);
+  padding: clamp(30px, 6vw, 54px);
+  border: 1px solid rgba(40, 53, 65, .08);
+  border-radius: 32px;
+  background: rgba(255, 255, 255, .94);
+  box-shadow: 0 28px 80px rgba(40, 53, 65, .12);
+  text-align: center;
+}
+
+.wello-access-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 34px;
+  color: #283541;
+}
+
+.wello-access-mark {
+  display: grid;
+  grid-template-columns: repeat(2, 10px);
+  gap: 4px;
+  width: 24px;
+  height: 24px;
+  transform: rotate(-8deg);
+}
+
+.wello-access-mark i {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 4px;
+  background: #48cfad;
+}
+
+.wello-access-mark i:nth-child(2),
+.wello-access-mark i:nth-child(3) {
+  background: #b4a5e7;
+}
+
+.wello-access-mark i:nth-child(4) {
+  background: #283541;
+}
+
+.wello-access-wordmark {
+  color: #283541;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -.06em;
+}
+
+.wello-access-copy h1 {
+  max-width: 330px;
+  margin: 0 auto 14px;
+  color: #283541;
+  font-size: clamp(30px, 5vw, 42px);
+  line-height: 1.04;
+  letter-spacing: -.045em;
+}
+
+.wello-access-copy p {
+  max-width: 330px;
+  margin: 0 auto;
+  color: #5c6b78;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.wello-access-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 24px;
+  margin: 26px auto 16px;
+  color: #5c6b78;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.wello-access-status-error {
+  color: #9b2c2c;
+}
+
+.wello-access-spinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(72, 207, 173, .28);
+  border-top-color: #48cfad;
+  border-radius: 50%;
+  animation: wello-access-spin .8s linear infinite;
+}
+
+.wello-access-google {
+  width: 100%;
+  min-height: 50px;
+  border: 1px solid #48cfad;
+  border-radius: 14px;
+  padding: 13px 18px;
+  background: #48cfad;
+  color: #163e38;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(72, 207, 173, .2);
+  transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+}
+
+.wello-access-google:hover:not(:disabled),
+.wello-access-google:focus-visible:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 13px 24px rgba(72, 207, 173, .28);
+}
+
+.wello-access-google:focus-visible {
+  outline: 3px solid rgba(180, 165, 231, .55);
+  outline-offset: 3px;
+}
+
+.wello-access-google:disabled {
+  cursor: wait;
+  opacity: .62;
+}
+
+.wello-access-hint {
+  margin: 18px 0 0;
+  color: #657481;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+@keyframes wello-access-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 520px) {
+  .wello-access-screen { padding: 18px; }
+  .wello-access-card { border-radius: 26px; padding: 30px 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wello-access-spinner { animation-duration: 1.8s; }
+  .wello-access-google { transition: none; }
+}

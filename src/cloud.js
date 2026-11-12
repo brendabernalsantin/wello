@@ -181,6 +181,20 @@ function userFromSession(session) {
   return { id: String(user.id), email: user.email ? String(user.email) : '', user_metadata: user.user_metadata ?? {} };
 }
 
+function sessionFingerprint(session) {
+  const userId = String(session?.user?.id ?? '');
+  const accessToken = String(session?.access_token ?? '');
+  if (!userId && !accessToken) return '';
+  return `${userId}:${accessToken}`;
+}
+
+function authUserFromResult(result) {
+  if (result?.error) throw result.error;
+  const user = result?.data?.user;
+  if (!user?.id) throw new Error('Supabase no pudo validar la sesión de esta cuenta.');
+  return user;
+}
+
 function statusLabel(state) {
   switch (state.status) {
     case 'missing_config': return 'Modo en línea pendiente de configuración';
@@ -344,6 +358,15 @@ export class WelloCloudController {
     this.remote = null;
     this.conflict = null;
     this.generation = 0;
+    this.authReady = false;
+    this.authEventQueue = Promise.resolve();
+    this.authEventSequence = 0;
+    this.authCallbackEpoch = 0;
+    this.authCallbackObserved = false;
+    this.initialSessionResolved = false;
+    this.initialSessionFingerprint = null;
+    this.lastAuthCallbackSessionFingerprint = null;
+    this.lastAuthCallbackHasValidSession = false;
     this.state = {
       status: this.configResult.ok ? 'checking' : this.configResult.reason === 'missing' ? 'missing_config' : 'invalid_config',
       message: this.configResult.message,
@@ -353,12 +376,65 @@ export class WelloCloudController {
       syncStatus: 'not-synced',
       memberships: [],
       pendingInvite: false,
+      authReady: false,
     };
     this.syncLoop = createCloudSyncCoordinator(this, {
       eventTarget: options.eventTarget ?? globalObject,
       document: this.document,
       debounceMs: options.debounceMs,
       intervalMs: options.intervalMs,
+    });
+  }
+
+  requiresAuthentication() {
+    return this.configResult?.config?.mode === 'production';
+  }
+
+  setAuthReady(ready) {
+    this.authReady = Boolean(ready);
+    this.state = { ...this.state, authReady: this.authReady };
+    return this.authReady;
+  }
+
+  beginAccessTransition({ status = 'checking', message = '', closeView = false } = {}) {
+    this.generation += 1;
+    this.syncLoop.stop();
+    this.setAuthReady(false);
+    if (closeView) this.opened = false;
+    this.state = { ...this.state, status, message, authReady: false };
+    this.updateAccessGate();
+    this.render();
+    return this.generation;
+  }
+
+  authAttemptIsCurrent(generation, accountId, callbackEpoch = this.authCallbackEpoch) {
+    return this.authCallbackEpoch === callbackEpoch && this.generation === generation && String(this.user?.id ?? '') === String(accountId ?? '');
+  }
+
+  enqueueAuthEvent(event, session, { callbackEpoch = this.authCallbackEpoch } = {}) {
+    const sequence = ++this.authEventSequence;
+    const task = this.authEventQueue.then(() => {
+      if (callbackEpoch !== this.authCallbackEpoch) return { status: 'stale-auth-callback' };
+      if (event === 'INITIAL_SESSION' && this.authCallbackObserved && sessionFingerprint(session) !== this.lastAuthCallbackSessionFingerprint) return { status: 'stale-initial-session' };
+      if (event === 'INITIAL_SESSION' && this.initialSessionResolved && sessionFingerprint(session) !== this.initialSessionFingerprint) {
+        return { status: 'stale-initial-session' };
+      }
+      return this.handleSession(event, session, { sequence, callbackEpoch });
+    });
+    this.authEventQueue = task.catch(() => undefined);
+    return task;
+  }
+
+  queueAuthStateChange(event, session) {
+    const callbackEpoch = ++this.authCallbackEpoch;
+    this.authCallbackObserved = true;
+    this.lastAuthCallbackSessionFingerprint = sessionFingerprint(session);
+    this.lastAuthCallbackHasValidSession = Boolean(session?.user?.id && session?.access_token);
+    if (this.requiresAuthentication() && (!session?.user?.id || this.user?.id !== session.user.id || !this.authReady)) {
+      this.beginAccessTransition({ status: 'checking', message: 'Revisando tu sesión…', closeView: true });
+    }
+    queueMicrotask(() => {
+      void this.enqueueAuthEvent(event, session, { callbackEpoch }).catch((error) => this.handleActionError(error));
     });
   }
 
@@ -375,15 +451,30 @@ export class WelloCloudController {
         auth: { flowType: 'pkce', autoRefreshToken: true, persistSession: true, detectSessionInUrl: false },
       });
       this.subscription = this.client.auth.onAuthStateChange((event, session) => {
-        queueMicrotask(() => this.handleSession(event, session));
+        this.queueAuthStateChange(event, session);
       })?.data?.subscription ?? null;
       await this.handleAuthCallback();
       const { data, error } = await this.client.auth.getSession();
       if (error) throw error;
-      await this.handleSession('INITIAL_SESSION', data?.session ?? null);
+      const initialSession = data?.session ?? null;
+      const initialFingerprint = sessionFingerprint(initialSession);
+      const callbackFingerprint = this.lastAuthCallbackSessionFingerprint;
+      if (!initialFingerprint && this.lastAuthCallbackHasValidSession && callbackFingerprint) {
+        // Supabase puede resolver getSession con un snapshot anterior al
+        // callback. La sesión ya observada por Auth es la fuente más reciente.
+        this.initialSessionResolved = true;
+        this.initialSessionFingerprint = callbackFingerprint;
+        await new Promise((resolve) => queueMicrotask(resolve));
+        await this.authEventQueue;
+      } else {
+        this.initialSessionResolved = true;
+        this.initialSessionFingerprint = initialFingerprint;
+        await this.enqueueAuthEvent('INITIAL_SESSION', initialSession);
+      }
     } catch (error) {
       this.state.status = 'error';
       this.state.message = error?.message || 'No se pudo inicializar Auth de Supabase.';
+      this.setAuthReady(false);
       this.render();
     }
     return this;
@@ -397,6 +488,7 @@ export class WelloCloudController {
       this.root.id = 'wello-cloud-root';
       this.document.body.appendChild(this.root);
     }
+    this.document.getElementById('wello-access-fallback')?.remove?.();
     this.root.addEventListener('click', (event) => {
       const element = event.target?.closest?.('[data-wello-cloud-action]');
       if (!element) return;
@@ -423,11 +515,7 @@ export class WelloCloudController {
   handleActionError(error) {
     if (isStaleNamespaceError(error)) return { status: 'stale' };
     const message = error?.message || 'No se pudo completar la acción.';
-    const accountId = this.user?.id ?? null;
-    const accountValid = Boolean(accountId)
-      && this.state.accountId === accountId
-      && this.state.namespace === accountNamespace(accountId)
-      && namespaceSnapshotMatches(this, captureNamespaceSnapshot(this));
+    const accountValid = this.isAuthenticated();
     this.state = accountValid
       ? { ...this.state, status: 'signed_in', syncStatus: 'error', message }
       : { ...this.state, status: 'error', message };
@@ -444,53 +532,181 @@ export class WelloCloudController {
     this.document.head.appendChild(style);
   }
 
-  render() {
+  updateAccessGate() {
+    const locked = this.requiresAuthentication() && !this.isAuthenticated();
+    try { this.app?.setAccessLocked?.(locked); } catch { /* la app puede no exponer el gate */ }
+    try {
+      if (this.document?.documentElement?.dataset) this.document.documentElement.dataset.welloAuth = locked ? 'locked' : 'ready';
+    } catch { /* el documento puede ser un mock mínimo */ }
+    return locked;
+  }
+
+  renderAccessScreen() {
     if (!this.root) return;
+    const configured = this.configResult.ok;
+    const checking = this.state.status === 'checking';
+    const signingIn = this.state.status === 'signing_in';
+    const hasError = this.state.status === 'error' || this.state.status === 'invalid_config' || this.state.status === 'missing_config';
+    const message = this.state.status === 'error'
+      ? this.state.message || 'No se pudo validar tu sesión. Intenta de nuevo.'
+      : this.state.status === 'invalid_config' || this.state.status === 'missing_config'
+        ? this.state.message
+        : signingIn
+          ? 'Abriendo Google…'
+          : checking
+            ? 'Revisando tu sesión…'
+            : 'Inicia sesión para continuar.';
+    const disabledGoogle = !configured || signingIn || checking;
+    this.root.innerHTML = `<section id="wello-access-screen" class="wello-access-screen" aria-labelledby="wello-access-title"><div class="wello-access-card"><div class="wello-access-brand" aria-label="Wello"><span class="wello-access-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="wello-access-wordmark">wello</span></div><div class="wello-access-copy"><h1 id="wello-access-title">Tu espacio empieza contigo.</h1><p>Inicia sesión para entrar a Wello y cuidar de tu hogar.</p></div><div class="wello-access-status ${hasError ? 'wello-access-status-error' : ''}" role="status" aria-live="polite" aria-atomic="true">${checking || signingIn ? '<span class="wello-access-spinner" aria-hidden="true"></span>' : ''}<span>${escapeHtml(message)}</span></div><button type="button" class="wello-access-google" data-wello-cloud-action="google" ${disabledGoogle ? 'disabled' : ''}>Continuar con Google</button>${hasError && configured ? '<p class="wello-access-hint">Puedes volver a intentarlo; tus copias locales permanecen intactas.</p>' : ''}</div></section>`;
+  }
+
+  render() {
+    this.updateAccessGate();
+    if (!this.root) return;
+    this.document?.getElementById('wello-access-fallback')?.remove?.();
+    if (this.requiresAuthentication() && !this.isAuthenticated()) {
+      this.renderAccessScreen();
+      return;
+    }
     if (!this.opened) {
       this.root.innerHTML = '<button type="button" class="wello-cloud-toggle" data-wello-cloud-action="open" aria-label="Abrir cuenta en línea">Cuenta</button>';
       return;
     }
     const configured = this.configResult.ok;
-    const signedIn = this.state.status === 'signed_in';
+    const signedIn = this.isAuthenticated();
     const disabledGoogle = !configured || this.state.status === 'signing_in';
     const errorClass = this.state.status === 'error' || this.state.syncStatus === 'error' || !configured ? 'wello-cloud-error' : '';
     const conflictHtml = this.state.syncStatus === 'conflict' ? `<div class="wello-cloud-conflict">Conflicto en <code>${escapeHtml(this.conflict?.recordKey || 'registro')}</code>. La versión local sigue intacta. <div class="wello-cloud-conflict-actions"><button type="button" data-wello-cloud-action="resolve-remote">Usar remota</button><button type="button" data-wello-cloud-action="resolve-local">Conservar local</button></div></div>` : '';
     const inviteHtml = signedIn && this.state.pendingInvite ? '<div class="wello-cloud-conflict">Hay una invitación pendiente. Google no la acepta automáticamente.<div class="wello-cloud-actions"><button type="button" data-wello-cloud-action="accept-invite">Aceptar invitación</button></div></div>' : '';
-    this.root.innerHTML = `<aside class="wello-cloud-panel" aria-label="Cuenta en línea de Wello"><div class="wello-cloud-head"><h2>Cuenta en línea</h2><button type="button" class="wello-cloud-close" data-wello-cloud-action="close" aria-label="Cerrar">×</button></div><div class="wello-cloud-banner ${errorClass}"><strong>${escapeHtml(statusLabel(this.state))}</strong><span class="wello-cloud-muted">${escapeHtml(statusDetail(this.state))}</span></div>${conflictHtml}${inviteHtml}${signedIn ? `<div class="wello-cloud-actions"><button type="button" data-wello-cloud-action="sync">Sincronizar ahora</button>${this.state.syncStatus === 'review' ? '<button type="button" data-wello-cloud-action="import">Revisar e importar datos remotos</button><button type="button" data-wello-cloud-action="import-local">Revisar datos locales para importar</button>' : ''}<button type="button" data-wello-cloud-action="nfc">Abrir acceso directo del súper</button><button type="button" data-wello-cloud-action="local">Cambiar a modo local</button><button type="button" data-wello-cloud-action="signout">Cerrar sesión</button></div><p class="wello-cloud-note">Los hogares remotos solo aparecen por membresía vigente. Un ID local no concede acceso.</p>` : `<div class="wello-cloud-actions"><button type="button" data-wello-cloud-action="google" ${disabledGoogle ? 'disabled' : ''}>Continuar con Google</button><button type="button" data-wello-cloud-action="local">Continuar en modo local</button></div><p class="wello-cloud-note">Google usa el SDK oficial de Supabase con PKCE. ${configured ? 'La configuración pública está presente.' : 'El botón de Google permanece deshabilitado porque falta configuración pública.'}</p>`}</aside>`;
+    const localAction = this.requiresAuthentication() ? '' : '<button type="button" data-wello-cloud-action="local">Cambiar a modo local</button>';
+    const signedOutActions = this.requiresAuthentication() ? '' : '<button type="button" data-wello-cloud-action="local">Continuar en modo local</button>';
+    this.root.innerHTML = `<aside class="wello-cloud-panel" aria-label="Cuenta en línea de Wello"><div class="wello-cloud-head"><h2>Cuenta en línea</h2><button type="button" class="wello-cloud-close" data-wello-cloud-action="close" aria-label="Cerrar">×</button></div><div class="wello-cloud-banner ${errorClass}"><strong>${escapeHtml(statusLabel(this.state))}</strong><span class="wello-cloud-muted">${escapeHtml(statusDetail(this.state))}</span></div>${conflictHtml}${inviteHtml}${signedIn ? `<div class="wello-cloud-actions"><button type="button" data-wello-cloud-action="sync">Sincronizar ahora</button>${this.state.syncStatus === 'review' ? '<button type="button" data-wello-cloud-action="import">Revisar e importar datos remotos</button><button type="button" data-wello-cloud-action="import-local">Revisar datos locales para importar</button>' : ''}<button type="button" data-wello-cloud-action="nfc">Abrir acceso directo del súper</button>${localAction}<button type="button" data-wello-cloud-action="signout">Cerrar sesión</button></div><p class="wello-cloud-note">Los hogares remotos solo aparecen por membresía vigente. Un ID local no concede acceso.</p>` : `<div class="wello-cloud-actions"><button type="button" data-wello-cloud-action="google" ${disabledGoogle ? 'disabled' : ''}>Continuar con Google</button>${signedOutActions}</div><p class="wello-cloud-note">Google usa el SDK oficial de Supabase con PKCE. ${configured ? 'La configuración pública está presente.' : 'El botón de Google permanece deshabilitado porque falta configuración pública.'}</p>`}</aside>`;
   }
 
   open() { this.opened = true; this.render(); }
-  close() { this.opened = false; this.render(); }
+  close() {
+    if (this.requiresAuthentication() && !this.isAuthenticated()) return;
+    this.opened = false;
+    this.render();
+  }
 
-  async clearAuthenticatedView(message = 'Sesión cerrada.', { clearCache = true } = {}) {
+  async clearAuthenticatedView(message = 'Sesión cerrada.', { clearCache = true, transition = true } = {}) {
     const oldUserId = this.user?.id;
-    this.generation += 1;
-    this.syncLoop.stop();
+    if (transition) this.beginAccessTransition({ status: 'checking', message, closeView: true });
+    else {
+      this.syncLoop.stop();
+      this.setAuthReady(false);
+      this.updateAccessGate();
+    }
+    const transitionGeneration = this.generation;
     if (oldUserId && clearCache) {
       try { this.localStorage?.removeItem(cacheStorageKey(oldUserId)); } catch { /* storage bloqueado */ }
     }
-    try { await this.app?.switchNamespace?.(LOGGED_OUT_NAMESPACE); } catch { /* app opcional */ }
+    try { await this.app?.switchNamespace?.(LOGGED_OUT_NAMESPACE); } catch { /* el gate permanece cerrado */ }
+    if (this.generation !== transitionGeneration) return { status: 'stale' };
     this.user = null;
     this.remote = null;
     this.cache = null;
     this.householdMappings = {};
     this.memberships = [];
     this.conflict = null;
-    this.state = { ...this.state, status: 'signed_out', accountId: null, email: '', namespace: null, syncStatus: 'not-synced', memberships: [], pendingInvite: Boolean(this.peekPendingInvite()), message };
+    this.state = { ...this.state, status: 'signed_out', accountId: null, email: '', namespace: null, syncStatus: 'not-synced', memberships: [], authReady: false, message };
+    this.setAuthReady(false);
     this.render();
+    return { status: 'signed_out' };
   }
 
-  async handleSession(event, session) {
+  async rejectAuthentication(generation, message) {
+    if (this.generation !== generation) return { status: 'stale' };
+    this.generation += 1;
+    this.syncLoop.stop();
+    this.setAuthReady(false);
+    this.user = null;
+    this.remote = null;
+    this.cache = null;
+    this.householdMappings = {};
+    this.memberships = [];
+    this.conflict = null;
+    const cleanupGeneration = this.generation;
+    try { await this.app?.switchNamespace?.(LOGGED_OUT_NAMESPACE); } catch { /* no desbloquear si falla */ }
+    if (this.generation !== cleanupGeneration) return { status: 'stale' };
+    this.state = { ...this.state, status: 'error', accountId: null, email: '', namespace: null, syncStatus: 'not-synced', memberships: [], authReady: false, message };
+    this.render();
+    return { status: 'error', message };
+  }
+
+  async handleSession(event, session, { callbackEpoch = this.authCallbackEpoch } = {}) {
+    if (callbackEpoch !== this.authCallbackEpoch) return { status: 'stale-auth-callback' };
     const nextUser = userFromSession(session);
     if (!nextUser) {
       await this.clearAuthenticatedView(event === 'SIGNED_OUT' ? 'Sesión cerrada.' : 'Sesión expirada o revocada. Los datos autenticados quedaron ocultos.');
       return;
     }
+
     const changedAccount = Boolean(this.user?.id && this.user.id !== nextUser.id);
-    if (!this.user || changedAccount) this.generation += 1;
     const namespace = accountNamespace(nextUser.id);
+    const alreadyVerified = this.requiresAuthentication()
+      && event === 'TOKEN_REFRESHED'
+      && !changedAccount
+      && this.authReady
+      && this.state.accountId === nextUser.id
+      && this.state.namespace === namespace
+      && this.isAuthenticated();
+
+    let attemptGeneration = this.generation;
+    if (this.requiresAuthentication() && !alreadyVerified) {
+      attemptGeneration = this.beginAccessTransition({ status: 'checking', message: 'Revisando tu sesión…', closeView: changedAccount || !this.user });
+      // Mantener el id visible para invalidar cualquier respuesta que llegue
+      // de una cuenta anterior, pero no permitir acceso mientras se verifica.
+      this.user = nextUser;
+      this.state = { ...this.state, status: 'checking', accountId: nextUser.id, email: nextUser.email, namespace, authReady: false, message: 'Revisando tu sesión…' };
+      this.render();
+      let verifiedUser;
+      try {
+        if (!this.client?.auth?.getUser) throw new Error('No se pudo validar la sesión con Supabase.');
+        verifiedUser = authUserFromResult(await this.client.auth.getUser(String(session?.access_token ?? '')));
+      } catch (error) {
+        if (!this.authAttemptIsCurrent(attemptGeneration, nextUser.id, callbackEpoch)) return { status: 'stale' };
+        return this.rejectAuthentication(attemptGeneration, error?.message || 'No se pudo validar la sesión con Supabase.');
+      }
+      if (!this.authAttemptIsCurrent(attemptGeneration, nextUser.id, callbackEpoch)) return { status: 'stale' };
+      if (String(verifiedUser.id) !== nextUser.id) {
+        return this.rejectAuthentication(attemptGeneration, 'La sesión validada no coincide con la cuenta solicitada.');
+      }
+    } else if (!this.requiresAuthentication()) {
+      if (!this.user || changedAccount) this.generation += 1;
+      this.setAuthReady(true);
+    }
+
+    if (this.requiresAuthentication() && !alreadyVerified) {
+      let appNamespace = null;
+      const canReadNamespace = typeof this.app?.getNamespace === 'function';
+      const canSwitchNamespace = typeof this.app?.switchNamespace === 'function';
+      try { if (canReadNamespace) appNamespace = this.app.getNamespace(); } catch { appNamespace = null; }
+      if (!canReadNamespace || appNamespace !== namespace && !canSwitchNamespace) {
+        return this.rejectAuthentication(attemptGeneration, 'No se pudo preparar el espacio privado de esta cuenta.');
+      }
+      try {
+        if (appNamespace !== namespace) await this.app.switchNamespace(namespace);
+        if (!this.authAttemptIsCurrent(attemptGeneration, nextUser.id, callbackEpoch)) return { status: 'stale' };
+        if (this.app.getNamespace() !== namespace) throw new Error('El espacio privado no quedó asociado a esta cuenta.');
+      } catch (error) {
+        if (!this.authAttemptIsCurrent(attemptGeneration, nextUser.id, callbackEpoch)) return { status: 'stale' };
+        return this.rejectAuthentication(attemptGeneration, error?.message || 'No se pudo preparar el espacio privado de esta cuenta.');
+      }
+    } else if (!this.requiresAuthentication()) {
+      let appNamespace;
+      const canReadNamespace = typeof this.app?.getNamespace === 'function';
+      try { if (canReadNamespace) appNamespace = this.app.getNamespace(); } catch { appNamespace = null; }
+      const shouldSwitchNamespace = changedAccount || event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || canReadNamespace && appNamespace !== namespace;
+      if (shouldSwitchNamespace) {
+        try { await this.app?.switchNamespace?.(namespace); } catch { /* la app puede no exponer persistencia en preview */ }
+      }
+    }
+
     this.user = nextUser;
-    this.state = { ...this.state, status: 'signed_in', accountId: nextUser.id, email: nextUser.email, namespace, message: 'Cuenta conectada.' };
+    this.state = { ...this.state, status: 'signed_in', accountId: nextUser.id, email: nextUser.email, namespace, authReady: this.requiresAuthentication() ? true : this.authReady, message: 'Cuenta conectada.' };
+    this.setAuthReady(true);
     this.cache = this.readCache(nextUser.id);
     this.householdMappings = { ...(this.cache.mappings || {}) };
     this.memberships = Array.isArray(this.cache.memberships) ? cloneJson(this.cache.memberships) : [];
@@ -499,20 +715,14 @@ export class WelloCloudController {
       this.conflict = null;
       this.state.syncStatus = 'not-synced';
     }
-    let appNamespace;
-    const canReadNamespace = typeof this.app?.getNamespace === 'function';
-    try { if (canReadNamespace) appNamespace = this.app.getNamespace(); } catch { appNamespace = null; }
-    const shouldSwitchNamespace = changedAccount || event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || canReadNamespace && appNamespace !== namespace;
-    if (shouldSwitchNamespace) {
-      try { await this.app?.switchNamespace?.(namespace); } catch { /* la app puede no exponer persistencia en preview */ }
-    }
     this.syncLoop.start();
-    this.inviteDestinationFromHash();
+    this.inviteDestinationFromHash({ render: false });
+    if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') this.consumeNfcDestination();
     this.render();
     if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
-      this.consumeNfcDestination();
       if (this.client) void this.sync({ direction: 'auto', trigger: 'bootstrap', fromCoordinator: true }).catch((error) => this.handleActionError(error));
     }
+    return { status: 'signed_in' };
   }
 
   async handleAuthCallback() {
@@ -544,21 +754,25 @@ export class WelloCloudController {
     if (!this.configResult.ok || !this.client) {
       this.state.status = this.configResult.reason === 'missing' ? 'missing_config' : 'invalid_config';
       this.state.message = this.configResult.message;
+      this.setAuthReady(false);
       this.render();
       return { error: new Error(this.state.message) };
     }
+    const signInGeneration = this.beginAccessTransition({ status: 'signing_in', message: 'Abriendo Google…', closeView: true });
     const currentHash = sanitizeNfcHash(this.location?.hash || '');
     savePendingNfcHash(this.sessionStorage, currentHash);
     this.inviteDestinationFromHash();
-    this.state.status = 'signing_in';
-    this.state.message = 'Abriendo Google…';
+    if (this.generation !== signInGeneration) return { status: 'stale' };
+    this.state = { ...this.state, status: 'signing_in', message: 'Abriendo Google…', authReady: false };
     this.render();
     try {
       const redirectTo = callbackUrlFor({ origin: this.location?.origin, pathname: this.location?.pathname });
       const result = await this.client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo, queryParams: { access_type: 'offline', prompt: 'consent' } } });
+      if (this.generation !== signInGeneration) return { status: 'stale' };
       if (result.error) throw result.error;
       return result;
     } catch (error) {
+      if (this.generation !== signInGeneration) return { status: 'stale' };
       this.state.status = 'error';
       this.state.message = error?.message || 'No se pudo iniciar Google.';
       this.render();
@@ -567,13 +781,21 @@ export class WelloCloudController {
   }
 
   async signOut() {
-    try { if (this.client) await this.client.auth.signOut(); } catch (error) { this.state.message = error?.message || 'No se pudo cerrar la sesión remota.'; }
-    await this.clearAuthenticatedView('Sesión cerrada. No se muestran datos de otra cuenta.');
+    const signOutGeneration = this.beginAccessTransition({ status: 'checking', message: 'Cerrando sesión…', closeView: true });
+    let signOutError = null;
+    try { await this.app?.switchNamespace?.(LOGGED_OUT_NAMESPACE); } catch { /* la interfaz permanece bloqueada */ }
+    if (this.generation !== signOutGeneration) return { status: 'stale' };
+    try { if (this.client) await this.client.auth.signOut(); } catch (error) { signOutError = error; }
+    if (this.generation !== signOutGeneration) return { status: 'stale' };
+    const message = signOutError?.message || 'Sesión cerrada. No se muestran datos de otra cuenta.';
+    return this.clearAuthenticatedView(message, { transition: false });
   }
 
   enterLocalMode() {
+    if (this.requiresAuthentication()) throw new Error('El modo local no está disponible en producción.');
     this.generation += 1;
     this.syncLoop.stop();
+    this.setAuthReady(false);
     try { this.app?.switchNamespace?.('local'); } catch { /* la app local sigue siendo independiente */ }
     try { this.app?.toast?.('Modo local activo. Los datos no se sincronizan sin una acción explícita.'); } catch { /* noop */ }
     this.state = { ...this.state, status: 'local', syncStatus: 'not-synced', message: 'Modo local activo.' };
@@ -1241,7 +1463,7 @@ export class WelloCloudController {
     return { proposal: true, revoked: data === true || data?.revoked === true };
   }
 
-  inviteDestinationFromHash() {
+  inviteDestinationFromHash({ render = true } = {}) {
     const hash = sanitizeInviteHash(this.location?.hash || '');
     if (!hash) {
       this.state.pendingInvite = Boolean(this.peekPendingInvite());
@@ -1251,7 +1473,7 @@ export class WelloCloudController {
     savePendingInviteToken(this.sessionStorage, token);
     this.state.pendingInvite = Boolean(this.peekPendingInvite());
     if (this.history?.replaceState && this.location) this.history.replaceState({}, this.document?.title || 'Wello', basePathFor(this.location.pathname));
-    this.render();
+    if (render) this.render();
     return { status: 'confirmation_required' };
   }
 
@@ -1355,6 +1577,7 @@ export class WelloCloudController {
   }
 
   consumeNfcDestination() {
+    if (this.requiresAuthentication() && !this.isAuthenticated()) return false;
     const current = sanitizeNfcHash(this.location?.hash || '');
     const pending = takePendingNfcHash(this.sessionStorage);
     const destination = current || pending;
@@ -1376,11 +1599,18 @@ export class WelloCloudController {
     } catch { /* eventos de UI son opcionales en pruebas */ }
   }
 
-  isAuthenticated() { return Boolean(this.user && this.state.status === 'signed_in'); }
+  isAuthenticated() {
+    if (!this.user || this.state.status !== 'signed_in') return false;
+    if (!this.requiresAuthentication()) return true;
+    const accountId = String(this.user.id ?? '');
+    if (!this.authReady || !accountId || String(this.state.accountId ?? '') !== accountId || this.state.namespace !== accountNamespace(accountId)) return false;
+    try { return this.app?.getNamespace?.() === accountNamespace(accountId); } catch { return false; }
+  }
 
   getState() {
     return {
       ...cloneJson(this.state),
+      authReady: this.authReady,
       user: this.user ? { ...this.user } : null,
       memberships: cloneJson(this.memberships),
       pendingInvite: Boolean(this.peekPendingInvite()),
